@@ -1,42 +1,147 @@
 {
   "version": 1,
-  "author": "Antigravity AI",
+  "author": "SkyBlue Aerospace",
   "editor": "wokwi",
   "parts": [
-    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
-    { "type": "wokwi-pushbutton", "id": "btn_master", "top": -100, "left": -150, "attrs": { "label": "Master SW", "color": "red" } },
-    { "type": "wokwi-pushbutton", "id": "btn_start", "top": -100, "left": -50, "attrs": { "label": "ICE Start", "color": "green" } },
-    { "type": "wokwi-pushbutton", "id": "btn_mode", "top": -100, "left": 50, "attrs": { "label": "Mode Toggle", "color": "blue" } },
-    { "type": "wokwi-pushbutton", "id": "btn_up", "top": -200, "left": -50, "attrs": { "label": "Throttle +", "color": "white" } },
-    { "type": "wokwi-pushbutton", "id": "btn_down", "top": -200, "left": 50, "attrs": { "label": "Throttle -", "color": "white" } },
-    { "type": "wokwi-pushbutton", "id": "btn_kill", "top": -200, "left": 150, "attrs": { "label": "EMERGENCY", "color": "red" } },
-    { "type": "wokwi-led", "id": "led_motor", "top": 100, "left": -100, "attrs": { "color": "green", "label": "MOTOR" } },
-    { "type": "wokwi-led", "id": "led_ice", "top": 100, "left": 0, "attrs": { "color": "orange", "label": "ICE" } },
-    { "type": "wokwi-led", "id": "led_solar", "top": 100, "left": 100, "attrs": { "color": "yellow", "label": "SOLAR" } }
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_master",
+      "top": -150,
+      "left": -150,
+      "attrs": {
+        "label": "MASTER SW",
+        "color": "red"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_emergency",
+      "top": -150,
+      "left": 150,
+      "attrs": {
+        "label": "EMERGENCY",
+        "color": "red"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_motor",
+      "top": 150,
+      "left": -100,
+      "attrs": {
+        "color": "green",
+        "label": "MOTOR"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_ice",
+      "top": 150,
+      "left": 0,
+      "attrs": {
+        "color": "orange",
+        "label": "ICE"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_solar",
+      "top": 150,
+      "left": 100,
+      "attrs": {
+        "color": "yellow",
+        "label": "SOLAR"
+      }
+    }
   ],
   "connections": [
-    [ "esp:TX", "esp:RX", "", [] ],
-    [ "esp:GND.1", "btn_master:2.L", "black", [ "v0" ] ],
-    [ "esp:GND.1", "btn_start:2.L", "black", [ "v0" ] ],
-    [ "esp:GND.1", "btn_mode:2.L", "black", [ "v0" ] ],
-    [ "esp:GND.1", "btn_up:2.L", "black", [ "v0" ] ],
-    [ "esp:GND.1", "btn_down:2.L", "black", [ "v0" ] ],
-    [ "esp:GND.1", "btn_kill:2.L", "black", [ "v0" ] ],
-    
-    [ "btn_master:1.L", "esp:4", "red", [ "h0" ] ],
-    [ "btn_start:1.L", "esp:5", "green", [ "h0" ] ],
-    [ "btn_mode:1.L", "esp:18", "blue", [ "h0" ] ],
-    [ "btn_up:1.L", "esp:19", "white", [ "h0" ] ],
-    [ "btn_down:1.L", "esp:21", "white", [ "h0" ] ],
-    [ "btn_kill:1.L", "esp:22", "red", [ "h0" ] ],
-
-    [ "esp:GND.2", "led_motor:K", "black", [ "v0" ] ],
-    [ "esp:GND.2", "led_ice:K", "black", [ "v0" ] ],
-    [ "esp:GND.2", "led_solar:K", "black", [ "v0" ] ],
-
-    [ "led_motor:A", "esp:2", "green", [ "v0" ] ],
-    [ "led_ice:A", "esp:15", "orange", [ "v0" ] ],
-    [ "led_solar:A", "esp:13", "yellow", [ "v0" ] ]
+    [
+      "esp:GND.1",
+      "btn_master:2.L",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "esp:GND.1",
+      "btn_emergency:2.L",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_master:1.L",
+      "esp:4",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "btn_emergency:1.L",
+      "esp:22",
+      "red",
+      [
+        "h0"
+      ]
+    ],
+    [
+      "esp:GND.2",
+      "led_motor:K",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "esp:GND.2",
+      "led_ice:K",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "esp:GND.2",
+      "led_solar:K",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "led_motor:A",
+      "esp:2",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "led_ice:A",
+      "esp:15",
+      "orange",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "led_solar:A",
+      "esp:13",
+      "yellow",
+      [
+        "v0"
+      ]
+    ]
   ],
   "dependencies": {}
 }
