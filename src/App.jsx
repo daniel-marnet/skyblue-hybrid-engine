@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Power,
     Activity,
@@ -8,13 +8,11 @@ import {
     AlertTriangle,
     RotateCcw,
     Skull,
-    ArrowUp,
-    ArrowDown,
-    Gauge,
     Wifi,
     WifiOff,
     Cloud,
-    CloudOff
+    CloudOff,
+    Zap
 } from 'lucide-react';
 import {
     Chart as ChartJS,
@@ -40,9 +38,51 @@ ChartJS.register(
     Legend
 );
 
-const MAX_SOLAR = 5.0;
-const MAX_THRUST = 5000;
-const TICK_RATE = 100;
+// Constants
+const MAX_SOLAR = 5.0; // kW
+const MAX_THRUST = 5000; // N
+const TICK_RATE = 100; // ms
+
+// --- Sub-components (Defined first to avoid hoisting issues) ---
+
+const StatItem = ({ label, value }) => (
+    <div className="stat-top-item">
+        <div className="stat-label">{label}</div>
+        <div className="stat-value">{value}</div>
+    </div>
+);
+
+const PanelSection = ({ title, children }) => (
+    <div className="panel-section">
+        <div className="panel-section-title">{title}</div>
+        <div className="panel-content">{children}</div>
+    </div>
+);
+
+const DataCard = ({ label, value, unit, color, percent }) => (
+    <div className="data-card">
+        <span className="stat-label">{label}</span>
+        <div className="card-val">{value}<span className="card-unit">{unit}</span></div>
+        <div className="meter-container">
+            <div
+                className="meter-fill"
+                style={{
+                    width: `${Math.min(100, Math.max(0, percent))}%`,
+                    backgroundColor: color,
+                    boxShadow: `0 0 10px ${color}`
+                }}
+            ></div>
+        </div>
+    </div>
+);
+
+const AnnunciatorLight = ({ label, active, type }) => (
+    <div className={`warning-light ${active ? `active ${type}` : ''}`}>
+        {label}
+    </div>
+);
+
+// --- Main Application ---
 
 const App = () => {
     const [state, setState] = useState({
@@ -58,20 +98,19 @@ const App = () => {
         thrust: 0,
         speed: 0,
         altitude: 0,
-        powerOutput: 0
+        powerOutput: 0,
+        timestamp: 0
     });
 
     const [isConnected, setIsConnected] = useState(false);
     const [cloudSync, setCloudSync] = useState(false);
-    const serialPort = useRef(null);
-    const serialReader = useRef(null);
     const serialWriter = useRef(null);
 
     const [chartData, setChartData] = useState({
         labels: Array(50).fill(''),
         datasets: [
             {
-                label: 'Thrust',
+                label: 'Thrust Line',
                 borderColor: '#00f2ff',
                 backgroundColor: 'rgba(0, 242, 255, 0.1)',
                 data: Array(50).fill(0),
@@ -82,38 +121,11 @@ const App = () => {
         ]
     });
 
-    // --- Cloud Sync Implementation ---
-    useEffect(() => {
-        let cloudTimer;
-        if (cloudSync && !isConnected) {
-            cloudTimer = setInterval(async () => {
-                try {
-                    const res = await fetch('/api/telemetry');
-                    if (!res.ok) return;
-                    const data = await res.json();
-                    if (data && data.timestamp) {
-                        setState(prev => ({
-                            ...prev,
-                            ...data,
-                            // Speed and Altitude are calculated locally for visual smoothness
-                            speed: prev.speed,
-                            altitude: prev.altitude
-                        }));
-                    }
-                } catch (err) {
-                    console.error('Cloud Sync Error:', err);
-                }
-            }, 1000);
-        }
-        return () => clearInterval(cloudTimer);
-    }, [cloudSync, isConnected]);
-
-    // --- Web Serial Hardware Integration ---
+    // --- Web Serial API ---
     const connectSerial = async () => {
         try {
             const port = await navigator.serial.requestPort();
             await port.open({ baudRate: 115200 });
-            serialPort.current = port;
             setIsConnected(true);
             setCloudSync(false);
 
@@ -123,86 +135,102 @@ const App = () => {
 
             const textDecoder = new TextDecoderStream();
             port.readable.pipeTo(textDecoder.writable);
-            serialReader.current = textDecoder.readable.getReader();
+            const reader = textDecoder.readable.getReader();
 
-            readSerialData();
-        } catch (err) {
-            console.error('Serial Connection Failed:', err);
-        }
-    };
-
-    const sendCommand = async (cmd) => {
-        if (serialWriter.current) {
-            await serialWriter.current.write(cmd + '\n');
-        }
-    };
-
-    const readSerialData = async () => {
-        while (true) {
-            try {
-                const { value, done } = await serialReader.current.read();
-                if (done) break;
-                if (value.startsWith('DATA:')) {
-                    const jsonStr = value.substring(5);
-                    const data = JSON.parse(jsonStr);
-                    const newState = {
-                        masterPower: data.mas,
-                        iceRunning: data.ice,
-                        motorRunning: data.mot,
-                        batterySoC: data.bat,
-                        fuelLevel: data.fue,
-                        throttle: data.thr,
-                        solarPower: data.sol * 1000,
-                        thrust: data.tst
-                    };
-
-                    setState(prev => ({ ...prev, ...newState }));
-
-                    // Push telemetry to Cloud (Redis) if connected to hardware
-                    if (cloudSync) {
-                        fetch('/api/telemetry', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...newState, timestamp: Date.now() })
-                        }).catch(e => console.error('Redis Upload Failed:', e));
+            const readLoop = async () => {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    if (value.includes('DATA:')) {
+                        try {
+                            const raw = value.split('DATA:')[1].split('\n')[0];
+                            const data = JSON.parse(raw);
+                            setState(prev => ({
+                                ...prev,
+                                masterPower: !!data.mas,
+                                iceRunning: !!data.ice,
+                                motorRunning: !!data.mot,
+                                batterySoC: data.bat,
+                                fuelLevel: data.fue,
+                                throttle: data.thr,
+                                solarPower: data.sol * 1000,
+                                thrust: data.tst,
+                                timestamp: Date.now()
+                            }));
+                        } catch (e) { }
                     }
                 }
-            } catch (err) {
-                console.error('Read error:', err);
-                break;
-            }
+                setIsConnected(false);
+            };
+            readLoop();
+        } catch (err) {
+            console.error('Serial Error:', err);
         }
-        setIsConnected(false);
     };
 
-    // --- Animation & Physics Engine ---
+    const sendCommand = useCallback(async (cmd) => {
+        if (serialWriter.current) {
+            try {
+                await serialWriter.current.write(cmd + '\n');
+            } catch (e) {
+                console.error('Write error:', e);
+            }
+        }
+    }, []);
+
+    // --- Cloud Sync (Redis) ---
+    useEffect(() => {
+        let cloudTimer;
+        if (cloudSync && !isConnected) {
+            cloudTimer = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/telemetry');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.timestamp) {
+                            setState(prev => ({ ...prev, ...data, speed: prev.speed, altitude: prev.altitude }));
+                        }
+                    }
+                } catch (e) { }
+            }, 1000);
+        }
+        return () => clearInterval(cloudTimer);
+    }, [cloudSync, isConnected]);
+
+    // --- Hybrid Engine Physics Simulation ---
     useEffect(() => {
         const timer = setInterval(() => {
             setState(prev => {
-                const speed = (prev.speed * 0.995) + (prev.thrust / 2500);
-                const altitude = (speed > 80) ? prev.altitude + (speed - 80) / 10 : Math.max(0, prev.altitude - 1.5);
+                // Shared Physics (Kinematics)
+                const newSpeed = (prev.speed * 0.995) + (prev.thrust / 2500);
+                const newAlt = (newSpeed > 80) ? prev.altitude + (newSpeed - 80) / 10 : Math.max(0, prev.altitude - 1.5);
 
-                // If connected to data source, only update physics
-                if (isConnected || (cloudSync && state.timestamp)) {
-                    return { ...prev, speed, altitude };
+                // If we have an external data source, just update kinematics
+                if (isConnected || (cloudSync && prev.timestamp)) {
+                    return { ...prev, speed: newSpeed, altitude: newAlt };
                 }
 
-                // Offline Simulation
+                // Full Local Simulation Logic
                 if (!prev.masterPower || prev.emergencyMode) {
                     return {
                         ...prev,
                         thrust: prev.thrust * 0.8,
-                        speed: prev.speed * 0.98,
-                        altitude: Math.max(0, prev.altitude - 1.5),
+                        speed: newSpeed,
+                        altitude: newAlt,
                         motorRunning: false,
-                        iceRunning: false
+                        iceRunning: false,
+                        powerOutput: 0
                     };
                 }
 
                 const now = Date.now();
                 const solarPower = Math.abs(Math.sin(now / 15000)) * (MAX_SOLAR * 1000);
                 let cons = (prev.throttle / 100) * 0.05;
-                if (prev.iceRunning && prev.mode === 'CHARGING') cons = -0.08;
+
+                if (prev.iceRunning) {
+                    if (prev.mode === 'CHARGING') cons = -0.08;
+                    else if (prev.mode === 'HYBRID') cons *= 0.6;
+                }
 
                 const batterySoC = Math.min(100, Math.max(0, prev.batterySoC - cons));
                 const thrust = (prev.throttle / 100) * MAX_THRUST;
@@ -212,9 +240,10 @@ const App = () => {
                     solarPower,
                     batterySoC,
                     thrust,
-                    speed,
-                    altitude,
-                    powerOutput: (prev.throttle / 100) * 125
+                    speed: newSpeed,
+                    altitude: newAlt,
+                    powerOutput: (prev.throttle / 100) * 125,
+                    motorRunning: prev.throttle > 5 && batterySoC > 1
                 };
             });
         }, TICK_RATE);
@@ -222,88 +251,105 @@ const App = () => {
         return () => clearInterval(timer);
     }, [isConnected, cloudSync]);
 
-    // Chart Update
+    // --- UI Update Loops (Chart & Time) ---
     useEffect(() => {
         const chartTimer = setInterval(() => {
             setChartData(prev => ({
                 ...prev,
-                datasets: [{ ...prev.datasets[0], data: [...prev.datasets[0].data.slice(1), state.thrust / 50] }]
+                datasets: [{
+                    ...prev.datasets[0],
+                    data: [...prev.datasets[0].data.slice(1), state.thrust / 50]
+                }]
             }));
         }, 500);
         return () => clearInterval(chartTimer);
     }, [state.thrust]);
 
-    const handleThrottle = (val) => {
-        const t = parseInt(val);
+    // --- Handlers ---
+    const toggleMaster = () => {
+        const next = !state.masterPower;
+        setState(s => ({ ...s, masterPower: next }));
+        if (isConnected) sendCommand(next ? "MASTER_ON" : "MASTER_OFF");
+    };
+
+    const handleThrottleChange = (e) => {
+        const val = parseInt(e.target.value);
         if (state.masterPower && !state.emergencyMode) {
-            setState(s => ({ ...s, throttle: t }));
-            if (isConnected) sendCommand(`THROTTLE:${t}`);
+            setState(s => ({ ...s, throttle: val }));
+            if (isConnected) sendCommand(`THROTTLE:${val}`);
         }
     };
 
     return (
-        <div className="app-container" style={{ display: 'grid', gridTemplateColumns: '350px 1fr 350px', gridTemplateRows: '80px 1fr 180px', gap: '15px', padding: '15px', height: '100vh', width: '100vw', overflow: 'hidden' }}>
-            {/* HUD HEADER */}
+        <div className="app-container">
+            {/* HEADER HUD */}
             <header className="hud-header">
-                <div className="system-title">SKYBLUE <span style={{ fontSize: '0.6rem', color: cloudSync ? 'var(--accent-primary)' : '#555' }}>CLOUD-SYNC v5.0</span></div>
-                <div className="hud-stats-top" style={{ display: 'flex', gap: '30px' }}>
-                    <StatItem label="IAS (kt)" value={state.speed.toFixed(0)} />
-                    <StatItem label="ALT (ft)" value={state.altitude.toFixed(0)} />
-                    <StatItem label="Status" value={isConnected ? "HIL ONLINE" : (cloudSync ? "REMOTE LINK" : "LOCAL SIM")} />
+                <div className="system-title">
+                    <Zap size={24} style={{ marginRight: '10px' }} />
+                    SKYBLUE <span className="version-tag">HIL v5.5</span>
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
+
+                <div className="hud-gauges">
+                    <StatItem label="Airspeed" value={`${state.speed.toFixed(0)} KT`} />
+                    <StatItem label="Altitude" value={`${state.altitude.toFixed(0)} FT`} />
+                    <StatItem label="Source" value={isConnected ? "HARDWARE" : (cloudSync ? "CLOUD" : "SIM")} />
+                </div>
+
+                <div className="hud-actions">
                     <button
+                        className={`hud-btn ${cloudSync ? 'active' : ''}`}
                         onClick={() => setCloudSync(!cloudSync)}
-                        className={`warning-light active ${cloudSync ? 'safe' : ''}`}
-                        style={{ cursor: 'pointer', background: 'none' }}
                     >
-                        {cloudSync ? <Cloud size={14} /> : <CloudOff size={14} />} {cloudSync ? 'Cloud Sync' : 'Go Cloud'}
+                        {cloudSync ? <Cloud size={16} /> : <CloudOff size={16} />}
+                        {cloudSync ? 'Cloud Sync' : 'Go Cloud'}
                     </button>
+
                     <button
+                        className={`hud-btn ${isConnected ? 'active' : 'warning'}`}
                         onClick={isConnected ? () => setIsConnected(false) : connectSerial}
-                        className={`warning-light active ${isConnected ? 'safe' : 'caution'}`}
-                        style={{ cursor: 'pointer', background: 'none' }}
                     >
-                        {isConnected ? <Wifi size={14} /> : <WifiOff size={14} />} {isConnected ? 'Link Live' : 'Hardware'}
+                        {isConnected ? <Wifi size={16} /> : <WifiOff size={16} />}
+                        {isConnected ? 'Connected' : 'HW Link'}
                     </button>
                 </div>
             </header>
 
-            {/* LEFT PANEL */}
+            {/* LEFT: POWER SPECS */}
             <aside className="side-panel">
-                <PanelSection title="Energy Bank">
+                <PanelSection title="Energy Storage">
                     <DataCard label="Battery SoC" value={state.batterySoC.toFixed(1)} unit="%" color="var(--success)" percent={state.batterySoC} />
                     <DataCard label="Fuel Level" value={state.fuelLevel.toFixed(1)} unit="%" color="var(--warning)" percent={state.fuelLevel} />
                 </PanelSection>
-                <PanelSection title="Renewable">
-                    <DataCard label="Solar Yield" value={(state.solarPower / 1000).toFixed(2)} unit="kW" color="#fee140" percent={(state.solarPower / (MAX_SOLAR * 1000)) * 100} />
+
+                <PanelSection title="Power Generation">
+                    <DataCard label="Solar Array" value={(state.solarPower / 1000).toFixed(2)} unit="kW" color="#fee140" percent={(state.solarPower / 5000) * 100} />
                     <div className="data-card">
                         <span className="stat-label">Bus Power</span>
-                        <div className="card-val">{(state.powerOutput || 0).toFixed(1)}<span className="card-unit">kW</span></div>
+                        <div className="card-val">{state.powerOutput.toFixed(1)}<span className="card-unit">kW</span></div>
                     </div>
                 </PanelSection>
             </aside>
 
-            {/* CENTER */}
-            <main style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: '15px' }}>
-                <div className="pfd-container">
-                    <div className="pfd-overlay"></div>
-                    <div id="horizon" style={{
-                        width: '100%', height: '100%',
-                        background: 'linear-gradient(to bottom, #1a2a6c 0%, #1a2a6c 50%, #5c2000 50%, #5c2000 100%)',
-                        opacity: 0.4,
-                        transition: 'transform 0.1s linear',
+            {/* CENTER: PFD & HUD */}
+            <main className="center-display">
+                <div className="pfd-viewport">
+                    <div className="pfd-bg" style={{
                         transform: `rotate(${state.speed / 20}deg) translateY(${-(state.altitude / 100) % 50}px)`
                     }}></div>
-                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 5 }}>
-                        <span className="stat-label" style={{ letterSpacing: '5px' }}>Propulsion Force</span>
-                        <div style={{ fontSize: '5rem', fontFamily: 'Orbitron', fontWeight: 700 }}>{state.thrust.toFixed(0)}</div>
-                        <span className="stat-label">Newtons</span>
+                    <div className="pfd-overlay-grid"></div>
+
+                    <div className="pfd-content">
+                        <div className="thrust-viz">
+                            <span className="label">THRUST FORCE</span>
+                            <div className="huge-val">{state.thrust.toFixed(0)}</div>
+                            <span className="unit">NEWTONS</span>
+                        </div>
                     </div>
                 </div>
-                <div className="graph-container">
-                    <div className="panel-section-title">Global Telemetry Feedback</div>
-                    <div style={{ height: 'calc(100% - 30px)' }}>
+
+                <div className="telemetry-chart">
+                    <div className="panel-section-title">Mission Telemetry Feedback</div>
+                    <div className="chart-wrapper">
                         <Line data={chartData} options={{
                             responsive: true,
                             maintainAspectRatio: false,
@@ -315,111 +361,77 @@ const App = () => {
                 </div>
             </main>
 
-            {/* RIGHT PANEL */}
+            {/* RIGHT: COMMAND & CONTROL */}
             <aside className="side-panel">
                 <PanelSection title="Command Panel">
-                    <div className="btn-grid">
-                        <button className={`cmd-btn ${state.masterPower ? 'active' : ''}`} onClick={() => {
-                            const newVal = !state.masterPower;
-                            setState(s => ({ ...s, masterPower: newVal }));
-                            if (isConnected) sendCommand(newVal ? "MASTER_ON" : "MASTER_OFF");
-                        }}>
-                            <Power size={18} /> Master
+                    <div className="control-grid">
+                        <button className={`cmd-btn ${state.masterPower ? 'on' : ''}`} onClick={toggleMaster}>
+                            <Power size={20} /> MASTER
                         </button>
-                        <button className={`cmd-btn ${state.iceRunning ? 'active' : ''}`} onClick={() => {
-                            if (state.masterPower && state.fuelLevel > 0) {
-                                setState(s => ({ ...s, iceRunning: !s.iceRunning }));
-                                if (isConnected) sendCommand("ICE_START");
-                            }
-                        }}>
-                            <Activity size={18} /> ICE
+
+                        <button
+                            className={`cmd-btn ${state.iceRunning ? 'on' : ''}`}
+                            onClick={() => {
+                                if (state.masterPower) {
+                                    setState(s => ({ ...s, iceRunning: !s.iceRunning }));
+                                    if (isConnected) sendCommand("ICE_START");
+                                }
+                            }}
+                        >
+                            <Activity size={20} /> ICE IGNITION
                         </button>
+
                         <button className="cmd-btn" onClick={() => {
                             const modes = ['ELECTRIC', 'HYBRID', 'CHARGING'];
-                            const nextMode = modes[(modes.indexOf(state.mode) + 1) % modes.length];
-                            setState(s => ({ ...s, mode: nextMode }));
-                            if (isConnected) sendCommand(`MODE:${modes.indexOf(nextMode)}`);
+                            const next = modes[(modes.indexOf(state.mode) + 1) % modes.length];
+                            setState(s => ({ ...s, mode: next }));
+                            if (isConnected) sendCommand(`MODE:${modes.indexOf(next)}`);
                         }}>
-                            <RotateCcw size={18} /> {state.mode}
+                            <RotateCcw size={20} /> {state.mode}
                         </button>
-                        <button className={`cmd-btn emergency-btn ${state.emergencyMode ? 'active' : ''}`} onClick={() => {
+
+                        <button className={`cmd-btn danger ${state.emergencyMode ? 'on' : ''}`} onClick={() => {
                             setState(s => ({ ...s, emergencyMode: true, throttle: 0 }));
                             if (isConnected) sendCommand("EMERGENCY_ON");
                         }}>
-                            <Skull size={18} /> KILL
+                            <Skull size={20} /> ABORT / KILL
                         </button>
                     </div>
                 </PanelSection>
-                <PanelSection title="Propulsion Lever">
-                    <div className="throttle-slider-container">
-                        <div style={{ fontSize: '2rem', fontFamily: 'Orbitron' }}>{state.throttle}%</div>
+
+                <PanelSection title="Thrust Control">
+                    <div className="throttle-container">
+                        <div className="throttle-val">{state.throttle}%</div>
                         <input
                             type="range"
+                            className="vertical-throttle"
+                            min="0" max="100"
                             value={state.throttle}
-                            onChange={(e) => handleThrottle(e.target.value)}
+                            onChange={handleThrottleChange}
                         />
+                        <span className="stat-label">Power Lever</span>
                     </div>
                 </PanelSection>
             </aside>
 
-            {/* FOOTER */}
-            <footer className="annunciator">
-                <div style={{ display: 'flex', gap: '10px' }}>
+            {/* FOOTER: STATS & LINKS */}
+            <footer className="cockpit-footer">
+                <div className="annunciators">
                     <AnnunciatorLight label="Motor" active={state.motorRunning} type="safe" />
                     <AnnunciatorLight label="ICE" active={state.iceRunning} type="caution" />
                     <AnnunciatorLight label="Cloud" active={cloudSync} type="safe" />
-                    <AnnunciatorLight label="Link" active={isConnected} type="safe" />
+                    <AnnunciatorLight label="HIL" active={isConnected} type="safe" />
                 </div>
 
-                <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', gap: '25px', fontSize: '0.7rem', color: '#8b949e' }}>
-                    <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Activity size={12} /> WOKWI SIMULATION
-                    </a>
-                    <a href="https://github.com/daniel-marnet/skyblue-hybrid-engine" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Wifi size={12} /> GITHUB REPO
-                    </a>
-                    <span style={{ opacity: 0.6 }}>|</span>
-                    <a href="https://daniel.marnettech.com.br/" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
-                        DEVELOPED BY DANIEL MARNET
-                    </a>
-                </div>
-
-                <div style={{ alignSelf: 'center', fontSize: '0.6rem', opacity: 0.3, letterSpacing: '2px' }}>
-                    SKYBLUE v5.2 | MISSION CONTROL
+                <div className="footer-links">
+                    <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noreferrer">WOKWI SIM</a>
+                    <a href="https://github.com/daniel-marnet/skyblue-hybrid-engine" target="_blank" rel="noreferrer">SOURCE CODE</a>
+                    <span className="divider">/</span>
+                    <a href="https://daniel.marnettech.com.br/" target="_blank" rel="noreferrer" className="dev-tag">DEVELOPED BY DANIEL MARNET</a>
                 </div>
             </footer>
         </div>
     );
 };
-
-const StatItem = ({ label, value }) => (
-    <div className="stat-top-item">
-        <div className="stat-label">{label}</div>
-        <div className="stat-value">{value}</div>
-    </div>
-);
-
-const PanelSection = ({ title, children }) => (
-    <div className="panel-section">
-        <div className="panel-section-title">{title}</div>
-        {children}
-    </div>
-);
-
-const DataCard = ({ label, value, unit, color, percent }) => (
-    <div className="data-card" style={{ marginBottom: '10px' }}>
-        <span className="stat-label">{label}</span>
-        <div className="card-val">{value}<span className="card-unit">{unit}</span></div>
-        <div className="meter-container">
-            <div className="meter-fill" style={{ width: `${percent}%`, backgroundColor: color, boxShadow: `0 0 10px ${color}` }}></div>
-        </div>
-    </div>
-);
-
-const AnnunciatorLight = ({ label, active, type }) => (
-    <div className={`warning-light ${active ? 'active' : ''} ${active ? type : ''}`}>
-        {label}
-    </div>
-);
 
 export default App;
