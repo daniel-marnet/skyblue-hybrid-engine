@@ -364,12 +364,29 @@ const App = () => {
 
             {/* FOOTER */}
             <footer className="annunciator">
-                <AnnunciatorLight label="Motor" active={state.motorRunning} type="safe" />
-                <AnnunciatorLight label="ICE" active={state.iceRunning} type="caution" />
-                <AnnunciatorLight label="Cloud" active={cloudSync} type="safe" />
-                <AnnunciatorLight label="HW Link" active={isConnected} type="safe" />
-                <div style={{ flexGrow: 1 }}></div>
-                <div style={{ alignSelf: 'center', fontSize: '0.6rem', opacity: 0.3 }}>REDIS CLOUD INFRASTRUCTURE | v5.1</div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <AnnunciatorLight label="Motor" active={state.motorRunning} type="safe" />
+                    <AnnunciatorLight label="ICE" active={state.iceRunning} type="caution" />
+                    <AnnunciatorLight label="Cloud" active={cloudSync} type="safe" />
+                    <AnnunciatorLight label="Link" active={isConnected} type="safe" />
+                </div>
+
+                <div style={{ display: 'flex', flexGrow: 1, justifyContent: 'center', gap: '25px', fontSize: '0.7rem', color: '#8b949e' }}>
+                    <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Activity size={12} /> WOKWI SIMULATION
+                    </a>
+                    <a href="https://github.com/daniel-marnet/skyblue-hybrid-engine" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Wifi size={12} /> GITHUB REPO
+                    </a>
+                    <span style={{ opacity: 0.6 }}>|</span>
+                    <a href="https://daniel.marnettech.com.br/" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
+                        DEVELOPED BY DANIEL MARNET
+                    </a>
+                </div>
+
+                <div style={{ alignSelf: 'center', fontSize: '0.6rem', opacity: 0.3, letterSpacing: '2px' }}>
+                    SKYBLUE v5.2 | MISSION CONTROL
+                </div>
             </footer>
         </div>
     );
