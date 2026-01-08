@@ -1,146 +1,146 @@
-/**
- * SKYBLUE WebSocket Relay Server
- * Vercel Edge Function que atua como intermediário entre Wokwi e Interface Web
- *
- * Arquitetura:
- * Wokwi (Cliente WS) → Esta Function (Relay) ← Interface Web (Cliente WS)
- */
+import Redis from 'ioredis';
 
-import { Server } from 'socket.io';
+// Redis connection - using the same one from telemetry.js
+const redisUrl = "redis://default:o80LHfGtdfHjhBYcr8ksiHTqA7DeGCK5@redis-11163.crce207.sa-east-1-2.ec2.cloud.redislabs.com:11163";
+const redis = new Redis(redisUrl);
+const pub = new Redis(redisUrl);
+const sub = new Redis(redisUrl);
 
-// Armazena conexões ativas
-const clients = new Map();
-const wokwiConnection = { ws: null, data: null };
+// Store for local SSE clients of this specific instance
+const localClients = new Map();
 
-export default function handler(req, res) {
+// Subscribe to telemetry channel
+sub.subscribe('skyblue_telemetry_stream');
+sub.on('message', (channel, message) => {
+  if (channel === 'skyblue_telemetry_stream') {
+    const data = JSON.parse(message);
+    // Broadcast to all local SSE clients
+    localClients.forEach((clientRes) => {
+      try {
+        clientRes.write(`data: ${JSON.stringify(data)}\n\n`);
+      } catch (e) {
+        // Client likely disconnected
+      }
+    });
+  }
+});
+
+export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
-  // Get path from query params (Vercel catch-all route)
-  const path = req.query.path ? `/${req.query.path.join('/')}` : '/';
+  // Get path from query params (Vercel catch-all route /api/websocket-relay/[...path])
+  const pathParts = req.query.path || [];
+  const path = `/${pathParts.join('/')}`;
 
-  // SSE (Server-Sent Events) para streaming de dados
+  // SSE (Server-Sent Events) for streaming data
   if (req.method === 'GET' && path === '/stream') {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
     const clientId = Date.now();
-    clients.set(clientId, res);
+    localClients.set(clientId, res);
 
-    // Envia dados atuais imediatamente se disponível
-    if (wokwiConnection.data) {
-      res.write(`data: ${JSON.stringify(wokwiConnection.data)}\n\n`);
+    // Send latest data if available in Redis
+    const lastData = await redis.get('skyblue_last_telemetry');
+    if (lastData) {
+      res.write(`data: ${lastData}\n\n`);
     }
 
-    // Heartbeat para manter conexão viva
+    // Heartbeat to keep connection alive
     const heartbeat = setInterval(() => {
       res.write(': heartbeat\n\n');
-    }, 30000);
+    }, 20000);
 
-    // Cleanup quando cliente desconectar
+    // Cleanup when client disconnects
     req.on('close', () => {
       clearInterval(heartbeat);
-      clients.delete(clientId);
+      localClients.delete(clientId);
     });
 
+    // We don't call res.end() because SSE is a long-lived connection
     return;
   }
 
-  // POST endpoint para Wokwi enviar dados
+  // Helper to parse body
+  const getBody = () => new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body || '{}'));
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+
+  // POST endpoint for Wokwi to send data
   if (req.method === 'POST' && path === '/wokwi') {
-    let body = '';
+    try {
+      const data = await getBody();
 
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
+      // Store in Redis (for new clients)
+      await redis.set('skyblue_last_telemetry', JSON.stringify(data), 'EX', 60);
 
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        wokwiConnection.data = data;
-        wokwiConnection.lastUpdate = Date.now();
+      // Publish to all instances via Redis Pub/Sub
+      await pub.publish('skyblue_telemetry_stream', JSON.stringify(data));
 
-        // Broadcast para todos os clientes conectados
-        clients.forEach((clientRes) => {
-          try {
-            clientRes.write(`data: ${JSON.stringify(data)}\n\n`);
-          } catch (e) {
-            console.error('Error sending to client:', e);
-          }
-        });
-
-        res.status(200).json({ success: true, clients: clients.size });
-      } catch (error) {
-        res.status(400).json({ error: 'Invalid JSON' });
-      }
-    });
-
-    return;
+      return res.status(200).json({ success: true, clients: localClients.size });
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid JSON body' });
+    }
   }
 
-  // POST endpoint para Interface Web enviar comandos para Wokwi
+  // POST endpoint for Interface Web to send commands to Wokwi
   if (req.method === 'POST' && path === '/command') {
-    let body = '';
+    try {
+      const { command } = await getBody();
 
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
+      // Store command in Redis
+      await redis.set('skyblue_pending_command', JSON.stringify(command), 'EX', 10);
 
-    req.on('end', () => {
-      try {
-        const command = JSON.parse(body);
-
-        // Armazena comando para Wokwi pegar
-        wokwiConnection.pendingCommand = command;
-        wokwiConnection.commandTimestamp = Date.now();
-
-        res.status(200).json({ success: true, command });
-      } catch (error) {
-        res.status(400).json({ error: 'Invalid JSON' });
-      }
-    });
-
-    return;
+      return res.status(200).json({ success: true, command });
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid JSON body' });
+    }
   }
 
-  // GET endpoint para Wokwi pegar comandos pendentes
+  // GET endpoint for Wokwi to pick up pending commands
   if (req.method === 'GET' && path === '/command') {
-    const command = wokwiConnection.pendingCommand;
-    const timestamp = wokwiConnection.commandTimestamp;
+    const commandStr = await redis.get('skyblue_pending_command');
+    const command = commandStr ? JSON.parse(commandStr) : null;
 
-    // Limpa comando após 1 segundo (evita repetição)
-    if (timestamp && Date.now() - timestamp > 1000) {
-      wokwiConnection.pendingCommand = null;
-      wokwiConnection.commandTimestamp = null;
+    // Commands are short-lived. We don't strictly need to delete it if we use EX, 
+    // but let's clear it once read to be safe and responsive.
+    if (command) {
+      await redis.del('skyblue_pending_command');
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       command: command || null,
-      timestamp: timestamp || null
+      timestamp: Date.now()
     });
-    return;
   }
 
   // Status endpoint
   if (req.method === 'GET' && path === '/status') {
-    res.status(200).json({
-      clients: clients.size,
-      wokwiConnected: wokwiConnection.lastUpdate
-        ? Date.now() - wokwiConnection.lastUpdate < 5000
-        : false,
-      lastUpdate: wokwiConnection.lastUpdate,
-      hasPendingCommand: !!wokwiConnection.pendingCommand
+    const lastUpdate = await redis.get('skyblue_last_telemetry');
+    return res.status(200).json({
+      instances_local_clients: localClients.size,
+      wokwiConnected: !!lastUpdate,
+      hasPendingCommand: !!(await redis.exists('skyblue_pending_command'))
     });
-    return;
   }
 
-  res.status(404).json({ error: 'Not found' });
+  return res.status(404).json({ error: `Not found: ${path}. Available: /stream, /wokwi, /command, /status`, query: req.query });
 }
+
