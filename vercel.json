@@ -2,6 +2,12 @@
     "version": 2,
     "cleanUrls": true,
     "framework": "vite",
+    "rewrites": [
+        {
+            "source": "/api/websocket-relay/:path*",
+            "destination": "/api/websocket-relay"
+        }
+    ],
     "headers": [
         {
             "source": "/(.*)",

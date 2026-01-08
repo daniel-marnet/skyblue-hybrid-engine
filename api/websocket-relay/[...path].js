@@ -23,8 +23,11 @@ export default function handler(req, res) {
     return;
   }
 
+  // Get path from query params (Vercel catch-all route)
+  const path = req.query.path ? `/${req.query.path.join('/')}` : '/';
+
   // SSE (Server-Sent Events) para streaming de dados
-  if (req.method === 'GET' && (req.url === '/stream' || req.url === '/api/websocket-relay/stream')) {
+  if (req.method === 'GET' && path === '/stream') {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -52,7 +55,7 @@ export default function handler(req, res) {
   }
 
   // POST endpoint para Wokwi enviar dados
-  if (req.method === 'POST' && (req.url === '/wokwi' || req.url === '/api/websocket-relay/wokwi')) {
+  if (req.method === 'POST' && path === '/wokwi') {
     let body = '';
 
     req.on('data', chunk => {
@@ -84,7 +87,7 @@ export default function handler(req, res) {
   }
 
   // POST endpoint para Interface Web enviar comandos para Wokwi
-  if (req.method === 'POST' && (req.url === '/command' || req.url === '/api/websocket-relay/command')) {
+  if (req.method === 'POST' && path === '/command') {
     let body = '';
 
     req.on('data', chunk => {
@@ -109,7 +112,7 @@ export default function handler(req, res) {
   }
 
   // GET endpoint para Wokwi pegar comandos pendentes
-  if (req.method === 'GET' && (req.url === '/command' || req.url === '/api/websocket-relay/command')) {
+  if (req.method === 'GET' && path === '/command') {
     const command = wokwiConnection.pendingCommand;
     const timestamp = wokwiConnection.commandTimestamp;
 
@@ -127,7 +130,7 @@ export default function handler(req, res) {
   }
 
   // Status endpoint
-  if (req.method === 'GET' && (req.url === '/status' || req.url === '/api/websocket-relay/status')) {
+  if (req.method === 'GET' && path === '/status') {
     res.status(200).json({
       clients: clients.size,
       wokwiConnected: wokwiConnection.lastUpdate
