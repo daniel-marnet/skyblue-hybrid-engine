@@ -9,12 +9,17 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@serialport/parser-readline": "^13.0.0",
         "chart.js": "^4.0.0",
+        "cors": "^2.8.5",
+        "express": "^5.2.1",
         "ioredis": "^5.9.0",
         "lucide-react": "^0.284.0",
         "react": "^18.2.0",
         "react-chartjs-2": "^5.0.0",
-        "react-dom": "^18.2.0"
+        "react-dom": "^18.2.0",
+        "serialport": "^13.0.0",
+        "ws": "^8.19.0"
     },
     "devDependencies": {
         "@types/react": "^18.2.15",

@@ -1,0 +1,28 @@
+{
+    "name": "skyblue-bridge-server",
+    "version": "1.0.0",
+    "description": "WebSocket bridge server for SKYBLUE Hybrid Engine - connects Wokwi to web interface",
+    "main": "bridge-server.js",
+    "scripts": {
+        "start": "node bridge-server.js",
+        "dev": "nodemon bridge-server.js"
+    },
+    "keywords": [
+        "wokwi",
+        "websocket",
+        "serial",
+        "bridge"
+    ],
+    "author": "Daniel Marnet",
+    "license": "MIT",
+    "dependencies": {
+        "serialport": "^12.0.0",
+        "@serialport/parser-readline": "^12.0.0",
+        "ws": "^8.16.0",
+        "express": "^4.18.2",
+        "cors": "^2.8.5"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    }
+}
