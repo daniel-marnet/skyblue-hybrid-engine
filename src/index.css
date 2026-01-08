@@ -1074,34 +1074,40 @@ body {
 }
 
 .status-indicators {
-    display: flex;
-    gap: 20px;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 30px !important;
     flex: 1;
-    justify-content: center;
+    justify-content: center !important;
+    align-items: center !important;
 }
 
-.footer-left {
-    display: flex;
-    align-items: center;
-    width: 250px;
-}
-
+.footer-left,
 .footer-right {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     width: 250px;
+    flex-shrink: 0;
+}
+
+.footer-left {
+    justify-content: flex-start;
+}
+
+.footer-right {
+    justify-content: flex-end;
 }
 
 .status-light {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.7rem;
-    font-weight: 600;
+    font-size: 0.72rem;
+    font-weight: 700;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
 }
 
 .status-dot {
@@ -1157,7 +1163,7 @@ body {
 .footer-links-new {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
     font-size: 0.7rem;
     color: var(--text-secondary);
 }

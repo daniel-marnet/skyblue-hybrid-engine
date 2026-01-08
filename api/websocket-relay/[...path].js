@@ -35,11 +35,10 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Get path from query params (Vercel catch-all route /api/websocket-relay/[...path])
-  // Some environments or file names might use '...path' or just 'path' as the key
-  const pathRaw = req.query.path || req.query['...path'] || [];
-  const pathParts = Array.isArray(pathRaw) ? pathRaw : [pathRaw];
-  const path = `/${pathParts.join('/')}`;
+  // Robust path detection from the raw URL
+  const url = req.url || '';
+  // Remove the base API path to get the relative route
+  const path = url.split('/api/websocket-relay')[1]?.split('?')[0] || '/';
 
   // SSE (Server-Sent Events) for streaming data
   if (req.method === 'GET' && path === '/stream') {
