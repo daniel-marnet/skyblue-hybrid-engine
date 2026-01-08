@@ -180,5 +180,3 @@ export const useWebSocketConnection = () => {
         sendCommand
     };
 };
-
-export default useWebSocketConnection;

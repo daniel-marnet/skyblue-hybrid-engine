@@ -203,23 +203,7 @@ const App = () => {
 
     // Removed Cloud Sync (Redis) - Now using Relay Server
     // Cloud Sync functionality removed in v1.0
-    useEffect(() => {
-        let cloudTimer;
-        if (false && !isConnected) { // Disabled
-            cloudTimer = setInterval(async () => {
-                try {
-                    const res = await fetch('/api/telemetry');
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data && data.timestamp) {
-                            setState(prev => ({ ...prev, ...data }));
-                        }
-                    }
-                } catch (e) { }
-            }, 1000);
-        }
-        return () => clearInterval(cloudTimer);
-    }, [cloudSync, isConnected]);
+    // This effect is disabled and kept only for reference
 
     // Update speed and altitude based on thrust (physics only, no fake data)
     useEffect(() => {
@@ -294,7 +278,7 @@ const App = () => {
     };
 
     const handleThrottleChange = (e) => {
-        if (!isConnected && !cloudSync) return;
+        if (!isConnected) return;
         const val = parseInt(e.target.value);
         if (state.masterPower && !state.emergencyMode) {
             setState(s => ({ ...s, throttle: val }));
@@ -894,13 +878,9 @@ const App = () => {
                         <div className="status-dot"></div>
                         <span>ICE</span>
                     </div>
-                    <div className={`status-light ${cloudSync ? 'active blue' : ''}`}>
+                    <div className={`status-light ${isConnected ? 'active blue' : ''}`}>
                         <div className="status-dot"></div>
                         <span>CLOUD</span>
-                    </div>
-                    <div className={`status-light ${isConnected ? 'active green' : ''}`}>
-                        <div className="status-dot"></div>
-                        <span>SERIAL</span>
                     </div>
                     <div className={`status-light ${state.emergencyMode ? 'active red' : ''}`}>
                         <div className="status-dot"></div>
