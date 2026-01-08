@@ -165,12 +165,15 @@ const App = () => {
                 masterPower: !!wsData.mas,
                 iceRunning: !!wsData.ice,
                 motorRunning: !!wsData.mot,
+                emergencyMode: !!wsData.eme,
                 mode: wsData.mod || 0,
                 batterySoC: wsData.bat || 0,
                 fuelLevel: wsData.fue || 0,
                 throttle: wsData.thr || 0,
                 solarPower: (wsData.sol || 0) * 1000,
                 thrust: wsData.tst || 0,
+                speed: wsData.spd || 0,
+                altitude: wsData.alt || 0,
                 flightTime: wsData.flt_time || 0,
                 distanceKm: wsData.dist_km || 0,
                 rangeKm: wsData.range_km || 0,
@@ -197,8 +200,8 @@ const App = () => {
         }
     }, [wsData]);
 
-    const sendCommand = useCallback((cmd) => {
-        wsSendCommand(cmd);
+    const sendCommand = useCallback((type, value = null) => {
+        wsSendCommand(type, value);
     }, [wsSendCommand]);
 
     // Removed Cloud Sync (Redis) - Now using Relay Server
@@ -314,7 +317,7 @@ const App = () => {
         }
         const next = (state.mode + 1) % 3;
         setState(s => ({ ...s, mode: next }));
-        if (isConnected) sendCommand(`MODE:${next}`);
+        if (isConnected) sendCommand("MODE", next);
     };
 
     const handleThrottleChange = (e) => {
@@ -322,7 +325,7 @@ const App = () => {
         const val = parseInt(e.target.value);
         if (state.masterPower && !state.emergencyMode) {
             setState(s => ({ ...s, throttle: val }));
-            if (isConnected) sendCommand(`THROTTLE:${val}`);
+            if (isConnected) sendCommand("THROTTLE", val);
         }
     };
 

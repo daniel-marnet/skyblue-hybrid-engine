@@ -314,12 +314,15 @@ void sendTelemetry() {
     doc["mas"] = master ? 1 : 0;
     doc["ice"] = iceOn ? 1 : 0;
     doc["mot"] = motorOn ? 1 : 0;
+    doc["eme"] = emergency ? 1 : 0;
     doc["mod"] = flightMode;
     doc["bat"] = battery;
     doc["fue"] = fuel;
     doc["thr"] = throttle * 100.0;
     doc["sol"] = solarW / 1000.0;
     doc["tst"] = thrust;
+    doc["spd"] = speed_kt;
+    doc["alt"] = distanceTraveled_km * 3280.84; // Mock altitude based on distance for integration
     doc["flt_time"] = flightTime_s;
     doc["dist_km"] = distanceTraveled_km;
     doc["range_km"] = rangeEstimate_km;
