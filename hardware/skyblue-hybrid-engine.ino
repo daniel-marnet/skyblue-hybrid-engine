@@ -102,25 +102,28 @@ void setup() {
     Serial.println("=================================");
     Serial.println("Connecting to WiFi...");
 
-    WiFi.begin(ssid, password, 6); // Canal 6 para Wokwi
+    WiFi.begin(ssid, password, 6); // Channel 6 is better for Wokwi
 
     int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    while (WiFi.status() != WL_CONNECTED && attempts < 60) { // Increased to 30 seconds
         delay(500);
         Serial.print(".");
         attempts++;
+        if (attempts % 10 == 0) Serial.printf(" [%d/60]\n", attempts);
     }
 
     if (WiFi.status() == WL_CONNECTED) {
-        Serial.println("\n✓ WiFi connected!");
+        Serial.println("\n\n✓ WiFi CONNECTED!");
         Serial.print("IP address: ");
         Serial.println(WiFi.localIP());
-        Serial.print("Relay server: ");
-        Serial.println(RELAY_SERVER);
-        Serial.println("=================================\n");
+        Serial.print("Gateway: ");
+        Serial.println(WiFi.gatewayIP());
+        Serial.print("Status: ONLINE");
+        Serial.println("\n=================================\n");
     } else {
-        Serial.println("\n✗ WiFi connection failed!");
-        Serial.println("Running in offline mode...\n");
+        Serial.println("\n\n✗ WiFi CONNECTION DELAYED!");
+        Serial.println("System will attempt background reconnection...");
+        Serial.println("=================================\n");
     }
 
     lastMs = millis();
@@ -309,7 +312,7 @@ void sendTelemetry() {
     float rangeEstimate_km = (avgPowerConsumption_W > 0) ? (totalAvailableEnergy_Wh / avgPowerConsumption_W) * speed_kt * 1.852 : 0.0;
 
     // Build JSON
-    StaticJsonDocument<1024> doc;
+    StaticJsonDocument<1536> doc; 
 
     doc["mas"] = master ? 1 : 0;
     doc["ice"] = iceOn ? 1 : 0;

@@ -138,6 +138,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       instances_local_clients: localClients.size,
       wokwiConnected: !!lastUpdate,
+      lastData: lastUpdate ? JSON.parse(lastUpdate) : null,
       hasPendingCommand: !!(await redis.exists('skyblue_pending_command'))
     });
   }
