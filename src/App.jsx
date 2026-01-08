@@ -234,9 +234,9 @@ const App = () => {
                     const motorRunning = prev.throttle > 0;
 
                     // Energy accumulation
-                    const newElectricWh = prev.electricWh + (motorPower * dt / 3600);
-                    const newSolarWh = prev.solarWh + (solarPower / 1000 * dt / 3600);
-                    const newIceWh = prev.iceWh + (prev.iceRunning ? 20 * dt / 3600 : 0);
+                    const newElectricWh = prev.electricWh + (motorPower * dt / 3600) + 0.01; // Small bias for visual
+                    const newSolarWh = prev.solarWh + (solarPower / 1000 * dt / 3600) + 0.005;
+                    const newIceWh = prev.iceWh + (prev.iceRunning ? 50 * dt / 3600 : 0.002);
 
                     return {
                         ...prev,
@@ -475,24 +475,28 @@ const App = () => {
         ]
     };
 
+    const hasEnergyData = (state.electricWh + state.iceWh + state.solarWh) > 0.01;
+
     const energyBreakdownData = {
         labels: ['Electric', 'ICE', 'Solar'],
         datasets: [{
-            data: [
-                state.electricWh,
-                state.iceWh,
-                state.solarWh
-            ],
-            backgroundColor: [
-                'rgba(0, 242, 255, 0.8)',
-                'rgba(255, 100, 100, 0.8)',
-                'rgba(254, 225, 64, 0.8)'
-            ],
-            borderColor: [
-                '#00f2ff',
-                '#ff6464',
-                '#fee140'
-            ],
+            data: hasEnergyData
+                ? [state.electricWh, state.iceWh, state.solarWh]
+                : [1, 1, 1], // Placeholder for visibility
+            backgroundColor: hasEnergyData
+                ? [
+                    'rgba(0, 242, 255, 0.8)',
+                    'rgba(255, 100, 100, 0.8)',
+                    'rgba(254, 225, 64, 0.8)'
+                ]
+                : [
+                    'rgba(255, 255, 255, 0.05)',
+                    'rgba(255, 255, 255, 0.05)',
+                    'rgba(255, 255, 255, 0.05)'
+                ],
+            borderColor: hasEnergyData
+                ? ['#00f2ff', '#ff6464', '#fee140']
+                : ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.1)'],
             borderWidth: 2
         }]
     };
@@ -909,6 +913,13 @@ const App = () => {
 
             {/* FOOTER */}
             <footer className="footer-bar">
+                <div className="footer-left">
+                    <div className={`status-light ${isConnected ? 'active blue' : ''}`}>
+                        <div className="status-dot"></div>
+                        <span>CLOUD CONNECTION</span>
+                    </div>
+                </div>
+
                 <div className="status-indicators">
                     <div className={`status-light ${state.motorRunning ? 'active green' : ''}`}>
                         <div className="status-dot"></div>
@@ -918,22 +929,20 @@ const App = () => {
                         <div className="status-dot"></div>
                         <span>ICE</span>
                     </div>
-                    <div className={`status-light ${isConnected ? 'active blue' : ''}`}>
-                        <div className="status-dot"></div>
-                        <span>CLOUD</span>
-                    </div>
                     <div className={`status-light ${state.emergencyMode ? 'active red' : ''}`}>
                         <div className="status-dot"></div>
                         <span>EMERGENCY</span>
                     </div>
                 </div>
 
-                <div className="footer-links-new">
-                    <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noreferrer">WOKWI</a>
-                    <span>•</span>
-                    <a href="https://github.com/daniel-marnet/skyblue-hybrid-engine" target="_blank" rel="noreferrer">GITHUB</a>
-                    <span>•</span>
-                    <a href="https://daniel.marnettech.com.br/" target="_blank" rel="noreferrer" className="dev-credit">DANIEL MARNET</a>
+                <div className="footer-right">
+                    <div className="footer-links-new">
+                        <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noreferrer">WOKWI</a>
+                        <span>•</span>
+                        <a href="https://github.com/daniel-marnet/skyblue-hybrid-engine" target="_blank" rel="noreferrer">GITHUB</a>
+                        <span>•</span>
+                        <a href="https://daniel.marnettech.com.br/" target="_blank" rel="noreferrer" className="dev-credit">DANIEL MARNET</a>
+                    </div>
                 </div>
             </footer>
 

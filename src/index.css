@@ -219,7 +219,7 @@ body {
 }
 
 .chart-body {
-    height: 150px;
+    height: 180px;
     position: relative;
 }
 
@@ -1068,14 +1068,29 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 15px 30px;
-    height: 60px;
+    padding: 0 30px;
+    height: 50px;
     backdrop-filter: blur(20px);
 }
 
 .status-indicators {
     display: flex;
-    gap: 15px;
+    gap: 20px;
+    flex: 1;
+    justify-content: center;
+}
+
+.footer-left {
+    display: flex;
+    align-items: center;
+    width: 250px;
+}
+
+.footer-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 250px;
 }
 
 .status-light {
