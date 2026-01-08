@@ -1,33 +1,36 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
- * Custom hook for WebSocket connection to SKYBLUE Bridge Server
- * Manages connection, data reception, and command sending
+ * Custom hook for Server-Sent Events (SSE) connection to SKYBLUE Relay Server
+ * Receives real-time data from Wokwi via Vercel Edge Function
  */
 export const useWebSocketConnection = () => {
     const [isConnected, setIsConnected] = useState(false);
     const [connectionError, setConnectionError] = useState(null);
     const [lastData, setLastData] = useState(null);
-    const wsRef = useRef(null);
+    const eventSourceRef = useRef(null);
     const reconnectTimeoutRef = useRef(null);
 
-    // WebSocket URL - can be configured via environment variable
-    const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8080';
+    // Relay server URL
+    const RELAY_URL = import.meta.env.VITE_RELAY_URL || '';
+    const STREAM_ENDPOINT = `${RELAY_URL}/api/websocket-relay/stream`;
+    const COMMAND_ENDPOINT = `${RELAY_URL}/api/websocket-relay/command`;
+    const STATUS_ENDPOINT = `${RELAY_URL}/api/websocket-relay/status`;
 
     const connect = useCallback(() => {
-        if (wsRef.current?.readyState === WebSocket.OPEN) {
-            console.log('⚠️ WebSocket already connected');
+        if (eventSourceRef.current) {
+            console.log('⚠️ Already connected');
             return;
         }
 
-        console.log(`🔌 Connecting to WebSocket: ${WS_URL}`);
+        console.log(`🔌 Connecting to relay server: ${STREAM_ENDPOINT}`);
         setConnectionError(null);
 
         try {
-            const ws = new WebSocket(WS_URL);
+            const eventSource = new EventSource(STREAM_ENDPOINT);
 
-            ws.onopen = () => {
-                console.log('✅ WebSocket connected');
+            eventSource.onopen = () => {
+                console.log('✅ Connected to relay server');
                 setIsConnected(true);
                 setConnectionError(null);
 
@@ -36,61 +39,46 @@ export const useWebSocketConnection = () => {
                     clearTimeout(reconnectTimeoutRef.current);
                     reconnectTimeoutRef.current = null;
                 }
+
+                // Check Wokwi connection status
+                checkWokwiStatus();
             };
 
-            ws.onmessage = (event) => {
+            eventSource.onmessage = (event) => {
                 try {
-                    const message = JSON.parse(event.data);
+                    // Ignore heartbeat messages
+                    if (event.data.startsWith(':')) return;
 
-                    switch (message.type) {
-                        case 'status':
-                            console.log('📊 Status update:', message.connected ? 'Connected' : 'Disconnected');
-                            if (message.error) {
-                                setConnectionError(message.error);
-                            }
-                            break;
-
-                        case 'data':
-                            // Update telemetry data
-                            setLastData(message.data);
-                            break;
-
-                        case 'error':
-                            console.error('❌ Server error:', message.message);
-                            setConnectionError(message.message);
-                            break;
-
-                        default:
-                            console.log('📨 Unknown message type:', message.type);
-                    }
+                    const data = JSON.parse(event.data);
+                    setLastData(data);
+                    console.log('📊 Data received from Wokwi:', data);
                 } catch (error) {
-                    console.error('❌ Error parsing WebSocket message:', error);
+                    console.error('❌ Error parsing data:', error);
                 }
             };
 
-            ws.onerror = (error) => {
-                console.error('❌ WebSocket error:', error);
-                setConnectionError('WebSocket connection error');
-            };
-
-            ws.onclose = () => {
-                console.log('🔌 WebSocket disconnected');
+            eventSource.onerror = (error) => {
+                console.error('❌ SSE error:', error);
                 setIsConnected(false);
-                wsRef.current = null;
+                setConnectionError('Connection to relay server failed');
 
-                // Attempt to reconnect after 5 seconds
+                // Close and attempt reconnect
+                eventSource.close();
+                eventSourceRef.current = null;
+
+                // Reconnect after 5 seconds
                 reconnectTimeoutRef.current = setTimeout(() => {
                     console.log('🔄 Attempting to reconnect...');
                     connect();
                 }, 5000);
             };
 
-            wsRef.current = ws;
+            eventSourceRef.current = eventSource;
         } catch (error) {
-            console.error('❌ Error creating WebSocket:', error);
+            console.error('❌ Error creating EventSource:', error);
             setConnectionError(error.message);
         }
-    }, [WS_URL]);
+    }, [STREAM_ENDPOINT]);
 
     const disconnect = useCallback(() => {
         if (reconnectTimeoutRef.current) {
@@ -98,39 +86,90 @@ export const useWebSocketConnection = () => {
             reconnectTimeoutRef.current = null;
         }
 
-        if (wsRef.current) {
-            console.log('🔌 Disconnecting WebSocket');
-            wsRef.current.close();
-            wsRef.current = null;
+        if (eventSourceRef.current) {
+            console.log('🔌 Disconnecting from relay server');
+            eventSourceRef.current.close();
+            eventSourceRef.current = null;
         }
 
         setIsConnected(false);
         setConnectionError(null);
     }, []);
 
-    const sendCommand = useCallback((command) => {
-        if (wsRef.current?.readyState === WebSocket.OPEN) {
-            // Send plain text command (works with both bridge and direct Wokwi)
-            wsRef.current.send(command);
-            console.log('📤 Sent command:', command);
-            return true;
-        } else {
-            console.warn('⚠️ Cannot send command: WebSocket not connected');
+    const sendCommand = useCallback(async (commandType, value = null) => {
+        try {
+            const command = {
+                type: commandType,
+                value: value,
+                timestamp: Date.now()
+            };
+
+            console.log('📤 Sending command to Wokwi:', command);
+
+            const response = await fetch(COMMAND_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ command })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Command sent:', result);
+                return true;
+            } else {
+                console.error('❌ Failed to send command:', response.statusText);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Error sending command:', error);
             return false;
         }
-    }, []);
+    }, [COMMAND_ENDPOINT]);
 
-    // Cleanup on unmount
+    const checkWokwiStatus = useCallback(async () => {
+        try {
+            const response = await fetch(STATUS_ENDPOINT);
+            if (response.ok) {
+                const status = await response.json();
+                console.log('📊 Relay status:', status);
+
+                if (!status.wokwiConnected) {
+                    setConnectionError('Wokwi simulation not connected. Please start Wokwi at https://wokwi.com/projects/452473775385515009');
+                } else {
+                    setConnectionError(null);
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error checking status:', error);
+        }
+    }, [STATUS_ENDPOINT]);
+
+    // Auto-connect on mount
     useEffect(() => {
+        // Don't auto-connect if no relay URL configured
+        if (!RELAY_URL) {
+            console.log('ℹ️ No relay URL configured, running in demo mode');
+            setConnectionError('Running in demonstration mode');
+            return;
+        }
+
+        connect();
+
+        // Cleanup on unmount
         return () => {
-            if (reconnectTimeoutRef.current) {
-                clearTimeout(reconnectTimeoutRef.current);
-            }
-            if (wsRef.current) {
-                wsRef.current.close();
-            }
+            disconnect();
         };
-    }, []);
+    }, [connect, disconnect, RELAY_URL]);
+
+    // Periodic status check (every 10 seconds)
+    useEffect(() => {
+        if (!isConnected || !RELAY_URL) return;
+
+        const interval = setInterval(checkWokwiStatus, 10000);
+        return () => clearInterval(interval);
+    }, [isConnected, checkWokwiStatus, RELAY_URL]);
 
     return {
         isConnected,

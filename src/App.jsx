@@ -1,4 +1,5 @@
-// SKYBLUE v1.0 - Complete Wokwi Integration with Diagram
+// SKYBLUE v1.0 - Cloud Connected Edition
+// Architecture: Interface ↔ Relay Server (Vercel) ↔ Wokwi ESP32 Simulation
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Power,
@@ -9,8 +10,6 @@ import {
     AlertTriangle,
     RotateCcw,
     Skull,
-    Wifi,
-    WifiOff,
     Cloud,
     CloudOff,
     Zap,
@@ -127,7 +126,6 @@ const App = () => {
     });
 
     const [isConnected, setIsConnected] = useState(false);
-    const [cloudSync, setCloudSync] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
 
     // History data for charts
@@ -203,10 +201,11 @@ const App = () => {
         wsSendCommand(cmd);
     }, [wsSendCommand]);
 
-    // Cloud Sync
+    // Removed Cloud Sync (Redis) - Now using Relay Server
+    // Cloud Sync functionality removed in v1.0
     useEffect(() => {
         let cloudTimer;
-        if (cloudSync && !isConnected) {
+        if (false && !isConnected) { // Disabled
             cloudTimer = setInterval(async () => {
                 try {
                     const res = await fetch('/api/telemetry');
@@ -264,8 +263,8 @@ const App = () => {
 
     // Handlers - only work when connected
     const toggleMaster = () => {
-        if (!isConnected && !cloudSync) {
-            alert('⚠️ Conecte ao Wokwi primeiro! Clique em "HW Link" ou "Cloud"');
+        if (!isConnected) {
+            alert('⚠️ Connect to Wokwi first! Click the "Connect Wokwi" cloud button in the top-right corner.');
             return;
         }
         const next = !state.masterPower;
@@ -274,8 +273,8 @@ const App = () => {
     };
 
     const toggleICE = () => {
-        if (!isConnected && !cloudSync) {
-            alert('⚠️ Conecte ao Wokwi primeiro! Clique em "HW Link" ou "Cloud"');
+        if (!isConnected) {
+            alert('⚠️ Connect to Wokwi first! Click the "Connect Wokwi" cloud button in the top-right corner.');
             return;
         }
         if (state.masterPower) {
@@ -285,8 +284,8 @@ const App = () => {
     };
 
     const cycleMode = () => {
-        if (!isConnected && !cloudSync) {
-            alert('⚠️ Conecte ao Wokwi primeiro! Clique em "HW Link" ou "Cloud"');
+        if (!isConnected) {
+            alert('⚠️ Connect to Wokwi first! Click the "Connect Wokwi" cloud button in the top-right corner.');
             return;
         }
         const next = (state.mode + 1) % 3;
@@ -304,8 +303,8 @@ const App = () => {
     };
 
     const handleEmergency = () => {
-        if (!isConnected && !cloudSync) {
-            alert('⚠️ Conecte ao Wokwi primeiro! Clique em "HW Link" ou "Cloud"');
+        if (!isConnected) {
+            alert('⚠️ Connect to Wokwi first! Click the "Connect Wokwi" cloud button in the top-right corner.');
             return;
         }
         setState(s => ({ ...s, emergencyMode: true, throttle: 0 }));
@@ -500,7 +499,7 @@ const App = () => {
             {/* HEADER */}
             <header className="header-bar">
                 <div className="header-left">
-                    <Zap size={28} className="logo-icon" />
+                    <img src="/skyblue.png" alt="SKYBLUE Logo" className="logo-image" />
                     <div>
                         <div className="system-title-new">SKYBLUE HYBRID ENGINE</div>
                         <div className="version-tag-new">v1.0 Environmental Analysis</div>
@@ -541,21 +540,12 @@ const App = () => {
                     </button>
 
                     <button
-                        className={`header-btn ${cloudSync ? 'active' : ''}`}
-                        onClick={() => setCloudSync(!cloudSync)}
-                        disabled={isConnected}
-                    >
-                        {cloudSync ? <Cloud size={18} /> : <CloudOff size={18} />}
-                        <span>{cloudSync ? 'Cloud' : 'Cloud'}</span>
-                    </button>
-
-                    <button
                         className={`header-btn ${isConnected ? 'active' : ''}`}
                         onClick={isConnected ? wsDisconnect : wsConnect}
-                        title={wsError ? `Error: ${wsError}` : isConnected ? 'Disconnect from Wokwi' : 'Connect to Wokwi Bridge'}
+                        title={wsError ? `Error: ${wsError}` : isConnected ? 'Disconnect from Wokwi Relay' : 'Connect to Wokwi via Relay Server'}
                     >
-                        {isConnected ? <Wifi size={18} /> : <WifiOff size={18} />}
-                        <span>{isConnected ? 'Connected' : wsError ? 'Error' : 'HW Link'}</span>
+                        {isConnected ? <Cloud size={18} /> : <CloudOff size={18} />}
+                        <span>{isConnected ? 'Wokwi Connected' : wsError ? 'Connection Error' : 'Connect Wokwi'}</span>
                     </button>
                 </div>
             </header>

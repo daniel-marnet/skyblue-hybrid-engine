@@ -121,11 +121,11 @@ const HelpModal = ({ isOpen, onClose }) => {
                                 <div className="step">
                                     <div className="step-number">1</div>
                                     <div className="step-content">
-                                        <h4>Connect to Wokwi</h4>
-                                        <p>Click the <strong>"HW Link"</strong> button in the top-right corner to connect to the Wokwi simulation.</p>
+                                        <h4>Open Wokwi Simulation</h4>
+                                        <p>Visit <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noreferrer">Wokwi Project</a> and click Play ▶️</p>
                                         <div className="tip">
                                             <Lightbulb size={16} />
-                                            <span>Make sure your Wokwi simulation is running first!</span>
+                                            <span>The simulation runs in your browser - no installation needed!</span>
                                         </div>
                                     </div>
                                 </div>
@@ -133,8 +133,8 @@ const HelpModal = ({ isOpen, onClose }) => {
                                 <div className="step">
                                     <div className="step-number">2</div>
                                     <div className="step-content">
-                                        <h4>Power On</h4>
-                                        <p>Click the <strong>"MASTER POWER"</strong> button to activate the system.</p>
+                                        <h4>Power On the System</h4>
+                                        <p>In the interface, click <strong>"MASTER POWER"</strong> to activate the hybrid engine.</p>
                                         <div className="warning">
                                             <AlertCircle size={16} />
                                             <span>All controls require Master Power to be ON</span>
@@ -145,32 +145,37 @@ const HelpModal = ({ isOpen, onClose }) => {
                                 <div className="step">
                                     <div className="step-number">3</div>
                                     <div className="step-content">
-                                        <h4>Set Throttle</h4>
-                                        <p>Use the throttle slider to control engine power (0-100%).</p>
+                                        <h4>Control Throttle</h4>
+                                        <p>Use the throttle slider to set engine power (0-100%). Watch thrust, speed, and altitude change in real-time!</p>
                                     </div>
                                 </div>
 
                                 <div className="step">
                                     <div className="step-number">4</div>
                                     <div className="step-content">
-                                        <h4>Monitor Performance</h4>
-                                        <p>Watch real-time data on charts, metrics, and environmental impact.</p>
+                                        <h4>Monitor & Analyze</h4>
+                                        <p>Explore charts, environmental metrics, and energy breakdowns. Compare hybrid vs conventional emissions!</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="help-section">
-                            <h3>Wokwi Connection Setup</h3>
+                            <h3>Wokwi Simulation</h3>
                             <div className="code-block">
-                                <h4>Option 1: Direct WebSocket (Recommended)</h4>
+                                <h4>🎮 How It Works</h4>
+                                <p>This project uses <strong>Wokwi</strong> - an online ESP32 simulator:</p>
                                 <ol>
-                                    <li>Open Wokwi project: <code>hybrid_engine_websocket.ino</code></li>
-                                    <li>Click Play ▶️ in Wokwi</li>
-                                    <li>Wait for WiFi connection</li>
-                                    <li>Click "HW Link" in this interface</li>
-                                    <li>You're connected! ✅</li>
+                                    <li>Open <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noreferrer">wokwi.com/projects/452473775385515009</a></li>
+                                    <li>The simulation runs <code>skyblue-hybrid-engine.ino</code> code</li>
+                                    <li>See visual LEDs and buttons in the circuit diagram</li>
+                                    <li>Check Serial Monitor for real-time telemetry</li>
+                                    <li>Control everything from this web interface! ✅</li>
                                 </ol>
+                                <div className="tip">
+                                    <Lightbulb size={16} />
+                                    <span><strong>Cloud Connected:</strong> Click "Connect Wokwi" button to link this interface with the online simulation via relay server!</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -477,89 +482,77 @@ const HelpModal = ({ isOpen, onClose }) => {
             case 'connection':
                 return (
                     <div className="help-content">
-                        <h2><Wifi size={24} /> Connection Guide</h2>
+                        <h2><Wifi size={24} /> Connection & Architecture</h2>
 
                         <div className="help-section">
-                            <h3>Connection Methods</h3>
-                            <p>SKYBLUE supports two connection methods:</p>
+                            <h3>How SKYBLUE Works - Cloud Connected Architecture</h3>
+                            <p>SKYBLUE v1.0 uses a relay server to connect the web interface with Wokwi simulation in real-time:</p>
+
+                            <div className="code-block" style={{fontSize: '11px', lineHeight: '1.4'}}>
+                                <pre style={{margin: 0}}>
+┌────────────────────────────────────────┐
+│  🌐 Web Interface (This Page)         │
+│  Controls, Charts, Analytics           │
+│          ↕ SSE Stream                  │
+│  ⚡ Relay Server (Vercel)              │
+│  /api/websocket-relay                  │
+│          ↕ HTTP POST/GET               │
+│  🎮 Wokwi ESP32 Simulation             │
+│  Physics Engine + Hardware Viz         │
+└────────────────────────────────────────┘
+                                </pre>
+                            </div>
                         </div>
 
                         <div className="help-section">
                             <div className="connection-method">
-                                <h4>🌐 WebSocket Direct (Recommended)</h4>
-                                <p><strong>Best for:</strong> Wokwi online simulation</p>
-                                <p><strong>Complexity:</strong> ⭐ Simple</p>
+                                <h4>☁️ Cloud Connected Mode</h4>
+                                <p><strong>Real-time synchronization between interface and Wokwi!</strong></p>
 
-                                <h5>Setup Steps:</h5>
+                                <h5>How to Connect:</h5>
                                 <ol>
-                                    <li>Open Wokwi project with <code>hybrid_engine_websocket.ino</code></li>
-                                    <li>Add WebSockets library (by Markus Sattler)</li>
-                                    <li>Click Play ▶️ in Wokwi</li>
-                                    <li>Wait for "WiFi connected" message</li>
-                                    <li>Note the IP address from Serial Monitor</li>
-                                    <li>Click "HW Link" button in this interface</li>
-                                    <li>Connection established! ✅</li>
+                                    <li>Open <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noreferrer">Wokwi Simulation</a> and click Play ▶️</li>
+                                    <li>Wait for "WiFi connected" in Wokwi Serial Monitor</li>
+                                    <li>Click <strong>"Connect Wokwi"</strong> button (cloud icon, top-right)</li>
+                                    <li>Status changes to "Wokwi Connected" with green indicator</li>
+                                    <li>Now you can control the Wokwi simulation from this interface!</li>
                                 </ol>
 
                                 <div className="tip">
                                     <Lightbulb size={16} />
-                                    <span>No bridge server needed! Direct WebSocket connection.</span>
+                                    <span>All commands (throttle, master power, ICE, modes) are sent to Wokwi in real-time!</span>
                                 </div>
                             </div>
 
                             <div className="connection-method">
-                                <h4>🌉 Bridge Server</h4>
-                                <p><strong>Best for:</strong> Physical ESP32 hardware</p>
-                                <p><strong>Complexity:</strong> ⭐⭐⭐ Advanced</p>
+                                <h4>🎮 What Happens in Wokwi</h4>
+                                <p><strong>Location:</strong> <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noreferrer">wokwi.com/projects/452473775385515009</a></p>
 
-                                <h5>Setup Steps:</h5>
-                                <ol>
-                                    <li>Install dependencies: <code>npm install serialport ws express cors</code></li>
-                                    <li>Connect ESP32 via USB or start Wokwi CLI</li>
-                                    <li>Start bridge server: <code>node bridge-server.js</code></li>
-                                    <li>Click "HW Link" in interface</li>
-                                </ol>
+                                <h5>Visual Feedback:</h5>
+                                <ul>
+                                    <li>🔴 LED indicators light up (Motor, ICE, Solar)</li>
+                                    <li>📟 Serial Monitor shows live telemetry every 500ms</li>
+                                    <li>⚡ ESP32 runs <code>skyblue-hybrid-engine.ino</code></li>
+                                    <li>🔢 Full physics engine calculates 32 parameters</li>
+                                    <li>📡 Data sent to relay server → your interface</li>
+                                </ul>
                             </div>
                         </div>
 
                         <div className="help-section">
-                            <h3>Connection Status Indicators</h3>
-
+                            <h3>Connection Status</h3>
                             <div className="status-indicators">
                                 <div className="status-item">
-                                    <div className="status-badge connected">Connected</div>
-                                    <p>Successfully connected to Wokwi/hardware. Data flowing normally.</p>
+                                    <div className="status-badge connected">Wokwi Connected</div>
+                                    <p><strong>Active:</strong> Interface receives real-time data from Wokwi. All controls work. Green cloud icon.</p>
                                 </div>
                                 <div className="status-item">
-                                    <div className="status-badge disconnected">HW Link</div>
-                                    <p>Not connected. Click to initiate connection.</p>
+                                    <div className="status-badge disconnected">Connect Wokwi</div>
+                                    <p><strong>Disconnected:</strong> Click to connect. Make sure Wokwi simulation is running first. Gray cloud icon.</p>
                                 </div>
                                 <div className="status-item">
-                                    <div className="status-badge error">Error</div>
-                                    <p>Connection failed. Check Wokwi simulation and try again.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="help-section">
-                            <h3>Data Flow</h3>
-                            <div className="data-flow">
-                                <div className="flow-step">
-                                    <div className="flow-icon">📡</div>
-                                    <div className="flow-content">
-                                        <h5>From Wokwi → Interface</h5>
-                                        <p>Telemetry data sent every 500ms via WebSocket</p>
-                                        <small>Includes: battery, fuel, thrust, emissions, etc.</small>
-                                    </div>
-                                </div>
-                                <div className="flow-arrow">↕️</div>
-                                <div className="flow-step">
-                                    <div className="flow-icon">🎮</div>
-                                    <div className="flow-content">
-                                        <h5>From Interface → Wokwi</h5>
-                                        <p>Control commands sent on button press</p>
-                                        <small>Commands: MASTER_ON, ICE_START, THROTTLE:65, etc.</small>
-                                    </div>
+                                    <div className="status-badge error">Connection Error</div>
+                                    <p><strong>Error:</strong> Wokwi not responding. Check if simulation is running and connected to relay server.</p>
                                 </div>
                             </div>
                         </div>
@@ -628,15 +621,15 @@ const HelpModal = ({ isOpen, onClose }) => {
                             <div className="troubleshoot-item">
                                 <div className="issue">
                                     <AlertCircle size={18} />
-                                    <h4>"Library not found: WebSocketsServer.h"</h4>
+                                    <h4>"Data seems frozen or not updating"</h4>
                                 </div>
                                 <div className="solutions">
                                     <h5>Solutions:</h5>
                                     <ul>
-                                        <li>✅ In Wokwi, click "Library Manager"</li>
-                                        <li>✅ Search for "WebSockets"</li>
-                                        <li>✅ Install "WebSockets by Markus Sattler"</li>
-                                        <li>✅ Restart simulation</li>
+                                        <li>✅ Refresh the page (Ctrl+R / Cmd+R)</li>
+                                        <li>✅ Ensure Master Power is ON</li>
+                                        <li>✅ Check that throttle is above 0%</li>
+                                        <li>✅ Clear browser cache if issues persist</li>
                                     </ul>
                                 </div>
                             </div>

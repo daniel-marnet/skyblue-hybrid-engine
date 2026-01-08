@@ -1,8 +1,11 @@
 {
-    "name": "skyblue-hybrid-cockpit",
+    "name": "skyblue-hybrid-engine",
     "private": true,
-    "version": "0.0.0",
+    "version": "1.0.0",
     "type": "module",
+    "description": "SKYBLUE Hybrid Aero Engine Control System - Environmental Analysis Edition",
+    "author": "Daniel Marnet <daniel@marnettech.com.br>",
+    "license": "MIT",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
