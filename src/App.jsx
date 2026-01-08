@@ -205,20 +205,60 @@ const App = () => {
     // Cloud Sync functionality removed in v1.0
     // This effect is disabled and kept only for reference
 
-    // Update speed and altitude based on thrust (physics only, no fake data)
+    // Local physics simulation when not connected to Wokwi
     useEffect(() => {
         const timer = setInterval(() => {
             setState(prev => {
+                // Calculate speed and altitude
                 const newSpeed = (prev.speed * 0.995) + (prev.thrust / 2500);
                 const newAlt = (newSpeed > 80) ? prev.altitude + (newSpeed - 80) / 10 : Math.max(0, prev.altitude - 1.5);
 
-                // Only update speed and altitude, all other data comes from WebSocket or Cloud
+                // If not connected to Wokwi, simulate local data
+                if (!isConnected && prev.masterPower) {
+                    const dt = TICK_RATE / 1000; // seconds
+
+                    // Calculate thrust based on throttle
+                    const targetThrust = (prev.throttle / 100) * MAX_THRUST;
+                    const newThrust = prev.thrust + (targetThrust - prev.thrust) * 0.1;
+
+                    // Battery discharge
+                    const motorPower = newThrust / 5000 * 100; // kW
+                    const batteryDrain = (motorPower / 50000) * (dt / 3600) * 100;
+                    const newBattery = Math.max(0, prev.batterySoC - batteryDrain);
+
+                    // Solar generation (varies)
+                    const solarVariation = Math.sin(Date.now() / 5000) * 0.5 + 0.5;
+                    const solarPower = MAX_SOLAR * solarVariation * 1000;
+
+                    // Motor running if throttle > 0
+                    const motorRunning = prev.throttle > 0;
+
+                    // Energy accumulation
+                    const newElectricWh = prev.electricWh + (motorPower * dt / 3600);
+                    const newSolarWh = prev.solarWh + (solarPower / 1000 * dt / 3600);
+                    const newIceWh = prev.iceWh + (prev.iceRunning ? 20 * dt / 3600 : 0);
+
+                    return {
+                        ...prev,
+                        thrust: newThrust,
+                        speed: newSpeed,
+                        altitude: newAlt,
+                        batterySoC: newBattery,
+                        solarPower: solarPower,
+                        motorRunning: motorRunning,
+                        electricWh: newElectricWh,
+                        solarWh: newSolarWh,
+                        iceWh: newIceWh
+                    };
+                }
+
+                // If connected, only update speed and altitude (data comes from Wokwi)
                 return { ...prev, speed: newSpeed, altitude: newAlt };
             });
         }, TICK_RATE);
 
         return () => clearInterval(timer);
-    }, []);
+    }, [isConnected]);
 
     // Update history for charts
     useEffect(() => {
