@@ -35,6 +35,9 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
+# Claude Code
+.claude/
+
 # Vercel
 .vercel
 
