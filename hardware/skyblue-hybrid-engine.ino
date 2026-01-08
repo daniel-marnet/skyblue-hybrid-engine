@@ -156,7 +156,7 @@ void loop() {
         if (iceOn && fuel > 0) {
             if (flightMode == 1) {
                 icePowerW = throttle * ICE_MAX_W;
-                motorDemandW = max(0.0, motorDemandW - icePowerW);
+                motorDemandW = max(0.0f, motorDemandW - icePowerW);
             }
             else if (flightMode == 2) {
                 icePowerW = ICE_MAX_W * 0.8;
