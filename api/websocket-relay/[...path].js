@@ -37,7 +37,6 @@ export default async function handler(req, res) {
 
   // Robust path detection from the raw URL
   const url = req.url || '';
-  // Remove the base API path to get the relative route
   const path = url.split('/api/websocket-relay')[1]?.split('?')[0] || '/';
 
   // SSE (Server-Sent Events) for streaming data
@@ -49,39 +48,40 @@ export default async function handler(req, res) {
     const clientId = Date.now();
     localClients.set(clientId, res);
 
-    // Send latest data if available in Redis
     const lastData = await redis.get('skyblue_last_telemetry');
     if (lastData) {
-      res.write(`data: ${lastData}\n\n`);
+      try {
+        res.write(`data: ${lastData}\n\n`);
+      } catch (e) { }
     }
 
-    // Heartbeat to keep connection alive
     const heartbeat = setInterval(() => {
-      res.write(': heartbeat\n\n');
+      try {
+        res.write(': heartbeat\n\n');
+      } catch (e) { }
     }, 20000);
 
-    // Cleanup when client disconnects
     req.on('close', () => {
       clearInterval(heartbeat);
       localClients.delete(clientId);
     });
-
-    // We don't call res.end() because SSE is a long-lived connection
     return;
   }
 
-  // Helper to parse body
-  const getBody = () => new Promise((resolve, reject) => {
+  // Helper to parse body securely
+  const getBody = () => new Promise((resolve) => {
     let body = '';
-    req.on('data', chunk => body += chunk);
+    req.on('data', chunk => {
+      body += chunk;
+      if (body.length > 10000) req.destroy(); // Protection
+    });
     req.on('end', () => {
       try {
         resolve(JSON.parse(body || '{}'));
       } catch (e) {
-        reject(e);
+        resolve({});
       }
     });
-    req.on('error', reject);
   });
 
   // POST endpoint for Wokwi to send data
