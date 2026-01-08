@@ -68,21 +68,26 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Helper to parse body securely
-  const getBody = () => new Promise((resolve) => {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk;
-      if (body.length > 10000) req.destroy(); // Protection
+  // Helper to parse body securely, handling both pre-parsed and raw streams
+  const getBody = async () => {
+    if (req.body && Object.keys(req.body).length > 0) return req.body;
+
+    return new Promise((resolve) => {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk;
+        if (body.length > 50000) req.destroy(); // Safety limit
+      });
+      req.on('end', () => {
+        try {
+          resolve(JSON.parse(body || '{}'));
+        } catch (e) {
+          resolve({});
+        }
+      });
+      req.on('error', () => resolve({}));
     });
-    req.on('end', () => {
-      try {
-        resolve(JSON.parse(body || '{}'));
-      } catch (e) {
-        resolve({});
-      }
-    });
-  });
+  };
 
   // POST endpoint for Wokwi to send data
   if (req.method === 'POST' && path === '/wokwi') {
