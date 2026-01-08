@@ -159,6 +159,9 @@ const App = () => {
 
     useEffect(() => {
         if (wsData) {
+            // Check if we are currently interacting with the throttle to avoid "jumping"
+            const isInteracting = Date.now() - (window.lastThrottleAt || 0) < 2000;
+
             setState(prev => ({
                 ...prev,
                 masterPower: wsData.mas !== undefined ? !!wsData.mas : prev.masterPower,
@@ -168,7 +171,7 @@ const App = () => {
                 mode: wsData.mod !== undefined ? wsData.mod : prev.mode,
                 batterySoC: wsData.bat !== undefined ? wsData.bat : prev.batterySoC,
                 fuelLevel: wsData.fue !== undefined ? wsData.fue : prev.fuelLevel,
-                throttle: wsData.thr !== undefined ? wsData.thr : prev.throttle,
+                throttle: (wsData.thr !== undefined && !isInteracting) ? wsData.thr : prev.throttle,
                 solarPower: wsData.sol !== undefined ? wsData.sol * 1000 : prev.solarPower,
                 thrust: wsData.tst !== undefined ? wsData.tst : prev.thrust,
                 speed: wsData.spd !== undefined ? wsData.spd : prev.speed,
@@ -319,6 +322,7 @@ const App = () => {
     const handleThrottleChange = (e) => {
         if (!isConnected) return;
         const val = parseInt(e.target.value);
+        window.lastThrottleAt = Date.now();
         if (state.masterPower && !state.emergencyMode) {
             setState(s => ({ ...s, throttle: val }));
             if (isConnected) sendCommand("THROTTLE", val);
@@ -557,6 +561,16 @@ const App = () => {
                 </div>
 
                 <div className="header-actions">
+                    <a
+                        href="https://wokwi.com/projects/452473775385515009"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="wokwi-pulse-btn"
+                    >
+                        <Zap size={18} fill="currentColor" />
+                        <span>Run Model</span>
+                    </a>
+
                     <button
                         className="header-btn"
                         onClick={() => setShowHelp(true)}
@@ -698,28 +712,28 @@ const App = () => {
                                 }}></div>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="environmental-summary">
-                            <div className="env-summary-header">
-                                <Leaf size={18} />
-                                <span>Environmental Impact</span>
+                    <div className="environmental-summary">
+                        <div className="env-summary-header">
+                            <Leaf size={18} />
+                            <span>Environmental Impact</span>
+                        </div>
+                        <div className="env-summary-grid">
+                            <div className="env-summary-item">
+                                <div className="env-summary-label">CO₂ Saved</div>
+                                <div className="env-summary-value">{(state.co2_saved_g / 1000).toFixed(2)} kg</div>
+                                <div className="env-summary-percent">-{state.co2_reduction_pct.toFixed(1)}%</div>
                             </div>
-                            <div className="env-summary-grid">
-                                <div className="env-summary-item">
-                                    <div className="env-summary-label">CO₂ Saved</div>
-                                    <div className="env-summary-value">{(state.co2_saved_g / 1000).toFixed(2)} kg</div>
-                                    <div className="env-summary-percent">-{state.co2_reduction_pct.toFixed(1)}%</div>
-                                </div>
-                                <div className="env-summary-item">
-                                    <div className="env-summary-label">Fuel Saved</div>
-                                    <div className="env-summary-value">{state.fuel_saved_l.toFixed(2)} L</div>
-                                    <div className="env-summary-percent">-{state.fuel_reduction_pct.toFixed(1)}%</div>
-                                </div>
-                                <div className="env-summary-item">
-                                    <div className="env-summary-label">Electric Ratio</div>
-                                    <div className="env-summary-value">{state.electricPct.toFixed(1)}%</div>
-                                    <div className="env-summary-percent">Clean Energy</div>
-                                </div>
+                            <div className="env-summary-item">
+                                <div className="env-summary-label">Fuel Saved</div>
+                                <div className="env-summary-value">{state.fuel_saved_l.toFixed(2)} L</div>
+                                <div className="env-summary-percent">-{state.fuel_reduction_pct.toFixed(1)}%</div>
+                            </div>
+                            <div className="env-summary-item">
+                                <div className="env-summary-label">Electric Ratio</div>
+                                <div className="env-summary-value">{state.electricPct.toFixed(1)}%</div>
+                                <div className="env-summary-percent">Clean Energy</div>
                             </div>
                         </div>
                     </div>
