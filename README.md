@@ -71,7 +71,7 @@ npm run dev
 
 **Daniel Marnet**
 *   **Portfolio:** [daniel.marnettech.com.br](https://daniel.marnettech.com.br/)
-*   **Contact:** [daniel@marnettech.com.br](mailto:daniel@marnettech.com.br)
+*   **Contact:** [daniel.marnet.tech@gmail.com](mailto:daniel.marnet.tech@gmail.com)
 *   **Issues:** [GitHub Issue Tracker](https://github.com/daniel-marnet/skyblue-hybrid-engine/issues)
 
 ---

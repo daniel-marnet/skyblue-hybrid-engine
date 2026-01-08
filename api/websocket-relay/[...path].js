@@ -44,22 +44,19 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
 
     const clientId = Date.now();
     localClients.set(clientId, res);
 
     const lastData = await redis.get('skyblue_last_telemetry');
     if (lastData) {
-      try {
-        res.write(`data: ${lastData}\n\n`);
-      } catch (e) { }
+      res.write(`data: ${lastData}\n\n`);
     }
 
     const heartbeat = setInterval(() => {
-      try {
-        res.write(': heartbeat\n\n');
-      } catch (e) { }
-    }, 20000);
+      if (!res.writableEnded) res.write(': heartbeat\n\n');
+    }, 15000);
 
     req.on('close', () => {
       clearInterval(heartbeat);

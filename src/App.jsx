@@ -639,316 +639,321 @@ const App = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="metrics-grid">
-                        <div className="metric-card">
-                            <div className="metric-icon"><Battery size={24} /></div>
-                            <div className="metric-info">
-                                <div className="metric-label">Battery</div>
-                                <div className="metric-value">{state.batterySoC.toFixed(1)}%</div>
-                            </div>
-                            <div className="metric-bar">
-                                <div className="metric-bar-fill" style={{
-                                    width: `${state.batterySoC}%`,
-                                    backgroundColor: '#39ff14'
-                                }}></div>
-                            </div>
-                        </div>
-
-                        <div className="metric-card">
-                            <div className="metric-icon"><Fuel size={24} /></div>
-                            <div className="metric-info">
-                                <div className="metric-label">Fuel</div>
-                                <div className="metric-value">{state.fuelLevel.toFixed(1)}%</div>
-                            </div>
-                            <div className="metric-bar">
-                                <div className="metric-bar-fill" style={{
-                                    width: `${state.fuelLevel}%`,
-                                    backgroundColor: '#ffcc00'
-                                }}></div>
-                            </div>
-                        </div>
-
-                        <div className="metric-card">
-                            <div className="metric-icon"><Sun size={24} /></div>
-                            <div className="metric-info">
-                                <div className="metric-label">Solar</div>
-                                <div className="metric-value">{(state.solarPower / 1000).toFixed(2)} kW</div>
-                            </div>
-                            <div className="metric-bar">
-                                <div className="metric-bar-fill" style={{
-                                    width: `${(state.solarPower / 5000) * 100}%`,
-                                    backgroundColor: '#fee140'
-                                }}></div>
-                            </div>
-                        </div>
-
-                        <div className="metric-card">
-                            <div className="metric-icon"><MapPin size={24} /></div>
-                            <div className="metric-info">
-                                <div className="metric-label">Range</div>
-                                <div className="metric-value">{state.rangeKm.toFixed(0)} km</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="environmental-summary">
-                        <div className="env-summary-header">
-                            <Leaf size={18} />
-                            <span>Environmental Impact</span>
-                        </div>
-                        <div className="env-summary-grid">
-                            <div className="env-summary-item">
-                                <div className="env-summary-label">CO₂ Saved</div>
-                                <div className="env-summary-value">{(state.co2_saved_g / 1000).toFixed(2)} kg</div>
-                                <div className="env-summary-percent">-{state.co2_reduction_pct.toFixed(1)}%</div>
-                            </div>
-                            <div className="env-summary-item">
-                                <div className="env-summary-label">Fuel Saved</div>
-                                <div className="env-summary-value">{state.fuel_saved_l.toFixed(2)} L</div>
-                                <div className="env-summary-percent">-{state.fuel_reduction_pct.toFixed(1)}%</div>
-                            </div>
-                            <div className="env-summary-item">
-                                <div className="env-summary-label">Electric Ratio</div>
-                                <div className="env-summary-value">{state.electricPct.toFixed(1)}%</div>
-                                <div className="env-summary-percent">Clean Energy</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* RIGHT COLUMN - CONTROLS & ANALYSIS */}
-                <div className="right-column">
-                    <div className="control-panel-new">
-                        <div className="panel-header-new">
-                            <Power size={16} />
-                            <span>Engine Controls</span>
-                        </div>
-
-                        {/* PRIMARY POWER CONTROL */}
-                        <div className="control-section">
-                            <div className="control-section-label">Primary Power</div>
-                            <button
-                                className={`control-btn-enhanced master ${state.masterPower ? 'active' : ''}`}
-                                onClick={toggleMaster}
-                            >
-                                <div className="control-icon-wrapper">
-                                    <Power size={28} />
-                                    {state.masterPower && <div className="icon-glow"></div>}
+                        <div className="metrics-grid">
+                            <div className="metric-card">
+                                <div className="metric-icon"><Battery size={24} /></div>
+                                <div className="metric-info">
+                                    <div className="metric-label">Battery</div>
+                                    <div className="metric-value">{(state.batterySoC || 0).toFixed(1)}%</div>
                                 </div>
-                                <div className="control-text">
-                                    <div className="control-name">MASTER POWER</div>
-                                    <div className="control-desc">
-                                        {state.masterPower ? 'System Active' : 'System Offline'}
+                                <div className="metric-bar">
+                                    <div className="metric-bar-fill" style={{
+                                        width: `${state.batterySoC || 0}%`,
+                                        backgroundColor: (state.batterySoC || 0) < 20 ? '#ff4d4d' : '#39ff14'
+                                    }}></div>
+                                </div>
+                            </div>
+
+                            <div className="metric-card">
+                                <div className="metric-icon"><Fuel size={24} /></div>
+                                <div className="metric-info">
+                                    <div className="metric-label">Fuel</div>
+                                    <div className="metric-value">{(state.fuelLevel || 0).toFixed(1)}%</div>
+                                </div>
+                                <div className="metric-bar">
+                                    <div className="metric-bar-fill" style={{
+                                        width: `${state.fuelLevel || 0}%`,
+                                        backgroundColor: (state.fuelLevel || 0) < 15 ? '#ff4d4d' : '#ffcc00'
+                                    }}></div>
+                                </div>
+                            </div>
+
+                            <div className="metric-card">
+                                <div className="metric-icon"><Sun size={24} /></div>
+                                <div className="metric-info">
+                                    <div className="metric-label">Solar</div>
+                                    <div className="metric-value">{(state.solarPower / 1000 || 0).toFixed(2)} kW</div>
+                                </div>
+                                <div className="metric-bar">
+                                    <div className="metric-bar-fill" style={{
+                                        width: `${Math.min(100, (state.solarPower / 5000) * 100 || 0)}%`,
+                                        backgroundColor: '#fee140'
+                                    }}></div>
+                                </div>
+                            </div>
+
+                            <div className="metric-card">
+                                <div className="metric-icon"><MapPin size={24} /></div>
+                                <div className="metric-info">
+                                    <div className="metric-label">Range</div>
+                                    <div className="metric-value">{(state.rangeKm || 0).toFixed(0)} km</div>
+                                </div>
+                                <div className="metric-bar">
+                                    <div className="metric-bar-fill" style={{
+                                        width: '100%',
+                                        opacity: 0.1,
+                                        backgroundColor: '#fff'
+                                    }}></div>
+                                </div>
+                            </div>
+
+                            <div className="environmental-summary">
+                                <div className="env-summary-header">
+                                    <Leaf size={18} />
+                                    <span>Environmental Impact</span>
+                                </div>
+                                <div className="env-summary-grid">
+                                    <div className="env-summary-item">
+                                        <div className="env-summary-label">CO₂ Saved</div>
+                                        <div className="env-summary-value">{(state.co2_saved_g / 1000).toFixed(2)} kg</div>
+                                        <div className="env-summary-percent">-{state.co2_reduction_pct.toFixed(1)}%</div>
+                                    </div>
+                                    <div className="env-summary-item">
+                                        <div className="env-summary-label">Fuel Saved</div>
+                                        <div className="env-summary-value">{state.fuel_saved_l.toFixed(2)} L</div>
+                                        <div className="env-summary-percent">-{state.fuel_reduction_pct.toFixed(1)}%</div>
+                                    </div>
+                                    <div className="env-summary-item">
+                                        <div className="env-summary-label">Electric Ratio</div>
+                                        <div className="env-summary-value">{state.electricPct.toFixed(1)}%</div>
+                                        <div className="env-summary-percent">Clean Energy</div>
                                     </div>
                                 </div>
-                                <div className={`control-status ${state.masterPower ? 'on' : 'off'}`}>
-                                    {state.masterPower ? 'ON' : 'OFF'}
-                                </div>
-                            </button>
+                            </div>
                         </div>
 
-                        {/* PROPULSION SYSTEMS */}
-                        <div className="control-section">
-                            <div className="control-section-label">
-                                Propulsion Systems
-                                {!state.masterPower && <span className="requires-tag">Requires Master Power</span>}
-                            </div>
+                        {/* RIGHT COLUMN - CONTROLS & ANALYSIS */}
+                        <div className="right-column">
+                            <div className="control-panel-new">
+                                <div className="panel-header-new">
+                                    <Power size={16} />
+                                    <span>Engine Controls</span>
+                                </div>
 
-                            <button
-                                className={`control-btn-enhanced ice ${state.iceRunning ? 'active' : ''}`}
-                                onClick={toggleICE}
-                                disabled={!state.masterPower}
-                            >
-                                <div className="control-icon-wrapper">
-                                    <Activity size={24} />
-                                    {state.iceRunning && <div className="icon-glow warning"></div>}
-                                </div>
-                                <div className="control-text">
-                                    <div className="control-name">ICE ENGINE</div>
-                                    <div className="control-desc">
-                                        {state.iceRunning ? 'Combustion Active' : 'Internal Combustion Engine'}
-                                    </div>
-                                </div>
-                                <div className={`control-status ${state.iceRunning ? 'on warning' : 'off'}`}>
-                                    {state.iceRunning ? 'ON' : 'OFF'}
-                                </div>
-                            </button>
-
-                            <button
-                                className={`control-btn-enhanced mode ${state.masterPower ? 'active-mode-' + state.mode : ''}`}
-                                onClick={cycleMode}
-                                disabled={!state.masterPower}
-                            >
-                                <div className="control-icon-wrapper">
-                                    <RotateCcw size={24} />
-                                </div>
-                                <div className="control-text">
-                                    <div className="control-name">FLIGHT MODE</div>
-                                    <div className="control-desc">
-                                        {state.mode === 0 && 'Electric Only - Zero Emissions'}
-                                        {state.mode === 1 && 'Hybrid - ICE Assists Propulsion'}
-                                        {state.mode === 2 && 'Charging - ICE Recharges Battery'}
-                                    </div>
-                                </div>
-                                <div className="control-mode-indicator">
-                                    <div className={`mode-badge mode-${state.mode}`}>
-                                        {getModeLabel()}
-                                    </div>
-                                </div>
-                            </button>
-                        </div>
-
-                        {/* THROTTLE CONTROL */}
-                        <div className="control-section">
-                            <div className="control-section-label">
-                                Thrust Control
-                                {(!state.masterPower || state.emergencyMode) &&
-                                    <span className="requires-tag">
-                                        {state.emergencyMode ? 'Emergency Active' : 'Requires Master Power'}
-                                    </span>
-                                }
-                            </div>
-                            <div className="throttle-section-enhanced">
-                                <div className="throttle-display">
-                                    <div className="throttle-value-large">{state.throttle}</div>
-                                    <div className="throttle-unit">%</div>
-                                </div>
-                                <div className="throttle-bar-container">
-                                    <div
-                                        className="throttle-bar-fill"
-                                        style={{ width: `${state.throttle}%` }}
+                                {/* PRIMARY POWER CONTROL */}
+                                <div className="control-section">
+                                    <div className="control-section-label">Primary Power</div>
+                                    <button
+                                        className={`control-btn-enhanced master ${state.masterPower ? 'active' : ''}`}
+                                        onClick={toggleMaster}
                                     >
-                                        <div className="throttle-bar-glow"></div>
+                                        <div className="control-icon-wrapper">
+                                            <Power size={28} />
+                                            {state.masterPower && <div className="icon-glow"></div>}
+                                        </div>
+                                        <div className="control-text">
+                                            <div className="control-name">MASTER POWER</div>
+                                            <div className="control-desc">
+                                                {state.masterPower ? 'System Active' : 'System Offline'}
+                                            </div>
+                                        </div>
+                                        <div className={`control-status ${state.masterPower ? 'on' : 'off'}`}>
+                                            {state.masterPower ? 'ON' : 'OFF'}
+                                        </div>
+                                    </button>
+                                </div>
+
+                                {/* PROPULSION SYSTEMS */}
+                                <div className="control-section">
+                                    <div className="control-section-label">
+                                        Propulsion Systems
+                                        {!state.masterPower && <span className="requires-tag">Requires Master Power</span>}
+                                    </div>
+
+                                    <button
+                                        className={`control-btn-enhanced ice ${state.iceRunning ? 'active' : ''}`}
+                                        onClick={toggleICE}
+                                        disabled={!state.masterPower}
+                                    >
+                                        <div className="control-icon-wrapper">
+                                            <Activity size={24} />
+                                            {state.iceRunning && <div className="icon-glow warning"></div>}
+                                        </div>
+                                        <div className="control-text">
+                                            <div className="control-name">ICE ENGINE</div>
+                                            <div className="control-desc">
+                                                {state.iceRunning ? 'Combustion Active' : 'Internal Combustion Engine'}
+                                            </div>
+                                        </div>
+                                        <div className={`control-status ${state.iceRunning ? 'on warning' : 'off'}`}>
+                                            {state.iceRunning ? 'ON' : 'OFF'}
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        className={`control-btn-enhanced mode ${state.masterPower ? 'active-mode-' + state.mode : ''}`}
+                                        onClick={cycleMode}
+                                        disabled={!state.masterPower}
+                                    >
+                                        <div className="control-icon-wrapper">
+                                            <RotateCcw size={24} />
+                                        </div>
+                                        <div className="control-text">
+                                            <div className="control-name">FLIGHT MODE</div>
+                                            <div className="control-desc">
+                                                {state.mode === 0 && 'Electric Only - Zero Emissions'}
+                                                {state.mode === 1 && 'Hybrid - ICE Assists Propulsion'}
+                                                {state.mode === 2 && 'Charging - ICE Recharges Battery'}
+                                            </div>
+                                        </div>
+                                        <div className="control-mode-indicator">
+                                            <div className={`mode-badge mode-${state.mode}`}>
+                                                {getModeLabel()}
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                {/* THROTTLE CONTROL */}
+                                <div className="control-section">
+                                    <div className="control-section-label">
+                                        Thrust Control
+                                        {(!state.masterPower || state.emergencyMode) &&
+                                            <span className="requires-tag">
+                                                {state.emergencyMode ? 'Emergency Active' : 'Requires Master Power'}
+                                            </span>
+                                        }
+                                    </div>
+                                    <div className="throttle-section-enhanced">
+                                        <div className="throttle-display">
+                                            <div className="throttle-value-large">{state.throttle}</div>
+                                            <div className="throttle-unit">%</div>
+                                        </div>
+                                        <div className="throttle-bar-container">
+                                            <div
+                                                className="throttle-bar-fill"
+                                                style={{ width: `${state.throttle}%` }}
+                                            >
+                                                <div className="throttle-bar-glow"></div>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            className="throttle-slider-enhanced"
+                                            min="0"
+                                            max="100"
+                                            value={state.throttle}
+                                            onChange={handleThrottleChange}
+                                            disabled={!state.masterPower || state.emergencyMode}
+                                        />
+                                        <div className="throttle-markers">
+                                            <span>0</span>
+                                            <span>25</span>
+                                            <span>50</span>
+                                            <span>75</span>
+                                            <span>100</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <input
-                                    type="range"
-                                    className="throttle-slider-enhanced"
-                                    min="0"
-                                    max="100"
-                                    value={state.throttle}
-                                    onChange={handleThrottleChange}
-                                    disabled={!state.masterPower || state.emergencyMode}
-                                />
-                                <div className="throttle-markers">
-                                    <span>0</span>
-                                    <span>25</span>
-                                    <span>50</span>
-                                    <span>75</span>
-                                    <span>100</span>
+
+                                {/* EMERGENCY KILL */}
+                                <div className="control-section emergency-section">
+                                    <button
+                                        className={`control-btn-enhanced emergency ${state.emergencyMode ? 'active' : ''}`}
+                                        onClick={handleEmergency}
+                                    >
+                                        <div className="control-icon-wrapper">
+                                            <AlertTriangle size={28} />
+                                            {state.emergencyMode && <div className="icon-glow danger"></div>}
+                                        </div>
+                                        <div className="control-text">
+                                            <div className="control-name">EMERGENCY KILL</div>
+                                            <div className="control-desc">
+                                                {state.emergencyMode ? '⚠️ ALL SYSTEMS SHUTDOWN' : 'Immediate System Shutdown'}
+                                            </div>
+                                        </div>
+                                        <div className={`control-status ${state.emergencyMode ? 'on danger' : 'off'}`}>
+                                            {state.emergencyMode ? 'ACTIVE' : 'STANDBY'}
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="chart-card">
+                                <div className="chart-header">
+                                    <BarChart3 size={16} />
+                                    <span>Emissions Comparison</span>
+                                </div>
+                                <div className="chart-body">
+                                    <Bar data={emissionsChartData} options={{
+                                        ...lineChartOptions,
+                                        scales: {
+                                            y: {
+                                                ticks: { color: '#8b949e', font: { size: 10 } },
+                                                grid: { color: 'rgba(255,255,255,0.05)' }
+                                            },
+                                            x: {
+                                                display: true,
+                                                ticks: { color: '#8b949e', font: { size: 9 } },
+                                                grid: { display: false }
+                                            }
+                                        }
+                                    }} />
+                                </div>
+                            </div>
+
+                            <div className="chart-card">
+                                <div className="chart-header">
+                                    <Zap size={16} />
+                                    <span>Energy Breakdown</span>
+                                </div>
+                                <div className="chart-body">
+                                    <Doughnut data={energyBreakdownData} options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                display: true,
+                                                position: 'bottom',
+                                                labels: { color: '#fff', font: { size: 10 } }
+                                            }
+                                        }
+                                    }} />
                                 </div>
                             </div>
                         </div>
-
-                        {/* EMERGENCY KILL */}
-                        <div className="control-section emergency-section">
-                            <button
-                                className={`control-btn-enhanced emergency ${state.emergencyMode ? 'active' : ''}`}
-                                onClick={handleEmergency}
-                            >
-                                <div className="control-icon-wrapper">
-                                    <AlertTriangle size={28} />
-                                    {state.emergencyMode && <div className="icon-glow danger"></div>}
-                                </div>
-                                <div className="control-text">
-                                    <div className="control-name">EMERGENCY KILL</div>
-                                    <div className="control-desc">
-                                        {state.emergencyMode ? '⚠️ ALL SYSTEMS SHUTDOWN' : 'Immediate System Shutdown'}
-                                    </div>
-                                </div>
-                                <div className={`control-status ${state.emergencyMode ? 'on danger' : 'off'}`}>
-                                    {state.emergencyMode ? 'ACTIVE' : 'STANDBY'}
-                                </div>
-                            </button>
-                        </div>
                     </div>
 
-                    <div className="chart-card">
-                        <div className="chart-header">
-                            <BarChart3 size={16} />
-                            <span>Emissions Comparison</span>
+                    {/* FOOTER */}
+                    <footer className="footer-bar">
+                        <div className="footer-left">
+                            <div className={`status-light ${isConnected ? 'active blue' : ''}`}>
+                                <div className="status-dot"></div>
+                                <span>CLOUD CONNECTION</span>
+                            </div>
                         </div>
-                        <div className="chart-body">
-                            <Bar data={emissionsChartData} options={{
-                                ...lineChartOptions,
-                                scales: {
-                                    y: {
-                                        ticks: { color: '#8b949e', font: { size: 10 } },
-                                        grid: { color: 'rgba(255,255,255,0.05)' }
-                                    },
-                                    x: {
-                                        display: true,
-                                        ticks: { color: '#8b949e', font: { size: 9 } },
-                                        grid: { display: false }
-                                    }
-                                }
-                            }} />
-                        </div>
-                    </div>
 
-                    <div className="chart-card">
-                        <div className="chart-header">
-                            <Zap size={16} />
-                            <span>Energy Breakdown</span>
+                        <div className="status-indicators">
+                            <div className={`status-light ${state.motorRunning ? 'active green' : ''}`}>
+                                <div className="status-dot"></div>
+                                <span>MOTOR</span>
+                            </div>
+                            <div className={`status-light ${state.iceRunning ? 'active yellow' : ''}`}>
+                                <div className="status-dot"></div>
+                                <span>ICE</span>
+                            </div>
+                            <div className={`status-light ${state.emergencyMode ? 'active red' : ''}`}>
+                                <div className="status-dot"></div>
+                                <span>EMERGENCY</span>
+                            </div>
                         </div>
-                        <div className="chart-body">
-                            <Doughnut data={energyBreakdownData} options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        display: true,
-                                        position: 'bottom',
-                                        labels: { color: '#fff', font: { size: 10 } }
-                                    }
-                                }
-                            }} />
+
+                        <div className="footer-right">
+                            <div className="footer-links-new">
+                                <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noreferrer">WOKWI</a>
+                                <span>•</span>
+                                <a href="https://github.com/daniel-marnet/skyblue-hybrid-engine" target="_blank" rel="noreferrer">GITHUB</a>
+                                <span>•</span>
+                                <a href="https://daniel.marnettech.com.br/" target="_blank" rel="noreferrer" className="dev-credit">DANIEL MARNET</a>
+                            </div>
                         </div>
-                    </div>
+                    </footer>
+
+                    {/* Help Modal */}
+                    <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
                 </div>
-            </div>
-
-            {/* FOOTER */}
-            <footer className="footer-bar">
-                <div className="footer-left">
-                    <div className={`status-light ${isConnected ? 'active blue' : ''}`}>
-                        <div className="status-dot"></div>
-                        <span>CLOUD CONNECTION</span>
-                    </div>
-                </div>
-
-                <div className="status-indicators">
-                    <div className={`status-light ${state.motorRunning ? 'active green' : ''}`}>
-                        <div className="status-dot"></div>
-                        <span>MOTOR</span>
-                    </div>
-                    <div className={`status-light ${state.iceRunning ? 'active yellow' : ''}`}>
-                        <div className="status-dot"></div>
-                        <span>ICE</span>
-                    </div>
-                    <div className={`status-light ${state.emergencyMode ? 'active red' : ''}`}>
-                        <div className="status-dot"></div>
-                        <span>EMERGENCY</span>
-                    </div>
-                </div>
-
-                <div className="footer-right">
-                    <div className="footer-links-new">
-                        <a href="https://wokwi.com/projects/452473775385515009" target="_blank" rel="noreferrer">WOKWI</a>
-                        <span>•</span>
-                        <a href="https://github.com/daniel-marnet/skyblue-hybrid-engine" target="_blank" rel="noreferrer">GITHUB</a>
-                        <span>•</span>
-                        <a href="https://daniel.marnettech.com.br/" target="_blank" rel="noreferrer" className="dev-credit">DANIEL MARNET</a>
-                    </div>
-                </div>
-            </footer>
-
-            {/* Help Modal */}
-            <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
-        </div>
-    );
+                );
 };
 
-export default App;
+                export default App;
