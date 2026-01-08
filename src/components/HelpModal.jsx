@@ -133,8 +133,20 @@ const HelpModal = ({ isOpen, onClose }) => {
                                 <div className="step">
                                     <div className="step-number">2</div>
                                     <div className="step-content">
+                                        <h4>Start the Simulation</h4>
+                                        <p>Click the neon green <strong>"RUN MODEL"</strong> button in the top bar. This will take you to the Wokwi project.</p>
+                                        <div className="tip">
+                                            <Play size={16} />
+                                            <span>Make sure to click the "Play" button inside Wokwi to start the data flow!</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="step">
+                                    <div className="step-number">3</div>
+                                    <div className="step-content">
                                         <h4>Power On the System</h4>
-                                        <p>In the interface, click <strong>"MASTER POWER"</strong> to activate the hybrid engine.</p>
+                                        <p>Back in the interface, click <strong>"MASTER POWER"</strong> to activate the control logic.</p>
                                         <div className="warning">
                                             <AlertCircle size={16} />
                                             <span>All controls require Master Power to be ON</span>
@@ -488,18 +500,18 @@ const HelpModal = ({ isOpen, onClose }) => {
                             <h3>How SKYBLUE Works - Cloud Connected Architecture</h3>
                             <p>SKYBLUE v1.0 uses a relay server to connect the web interface with Wokwi simulation in real-time:</p>
 
-                            <div className="code-block" style={{fontSize: '11px', lineHeight: '1.4'}}>
-                                <pre style={{margin: 0}}>
-┌────────────────────────────────────────┐
-│  🌐 Web Interface (This Page)         │
-│  Controls, Charts, Analytics           │
-│          ↕ SSE Stream                  │
-│  ⚡ Relay Server (Vercel)              │
-│  /api/websocket-relay                  │
-│          ↕ HTTP POST/GET               │
-│  🎮 Wokwi ESP32 Simulation             │
-│  Physics Engine + Hardware Viz         │
-└────────────────────────────────────────┘
+                            <div className="code-block" style={{ fontSize: '11px', lineHeight: '1.4' }}>
+                                <pre style={{ margin: 0 }}>
+                                    ┌────────────────────────────────────────┐
+                                    │  🌐 Web Interface (This Page)         │
+                                    │  Controls, Charts, Analytics           │
+                                    │          ↕ SSE Stream                  │
+                                    │  ⚡ Relay Server (Vercel)              │
+                                    │  /api/websocket-relay                  │
+                                    │          ↕ HTTP POST/GET               │
+                                    │  🎮 Wokwi ESP32 Simulation             │
+                                    │  Physics Engine + Hardware Viz         │
+                                    └────────────────────────────────────────┘
                                 </pre>
                             </div>
                         </div>

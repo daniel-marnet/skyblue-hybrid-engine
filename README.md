@@ -38,6 +38,8 @@ The system utilizes a tri-layer architecture for seamless cloud-synchronized con
     *   `HYBRID`: Combined ICE and Electric power for maximum thrust.
     *   `CHARGING`: ICE prioritizes battery recovery while maintaining flight.
 *   **Engineering Cockpit:** Professional-grade layout optimized for monitoring and manual control.
+*   **One-Click Simulation:** Direct "RUN MODEL" integration to launch and synchronize the Wokwi hardware model.
+*   **Adaptive UI:** High-fidelity animations and PFD (Primary Flight Display) that respond to hardware physics.
 
 ---
 

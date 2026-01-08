@@ -114,6 +114,9 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     transition: all 0.3s ease;
+    min-width: 100px;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
 }
 
 .stat-pill:hover {
@@ -380,10 +383,10 @@ body {
     background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 15px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
     transition: all 0.3s ease;
 }
 
@@ -411,7 +414,7 @@ body {
 }
 
 .metric-value {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-family: 'Orbitron';
     font-weight: 700;
     color: var(--text-primary);
@@ -436,11 +439,11 @@ body {
     background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 15px;
+    padding: 12px;
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 180px;
+    margin-top: 5px;
 }
 
 .env-summary-header {
@@ -482,7 +485,7 @@ body {
 }
 
 .env-summary-value {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
     font-family: 'Orbitron';
     font-weight: 700;
     color: var(--success);

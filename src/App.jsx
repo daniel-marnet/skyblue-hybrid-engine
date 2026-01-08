@@ -262,13 +262,14 @@ const App = () => {
         return () => clearInterval(timer);
     }, [isConnected]);
 
-    // Update history for charts
+    const lastHistoryUpdate = useRef(0);
     useEffect(() => {
-        const historyTimer = setInterval(() => {
+        const now = Date.now();
+        if (now - lastHistoryUpdate.current >= 1000) {
+            lastHistoryUpdate.current = now;
             setHistory(prev => {
-                const now = new Date();
-                const timeLabel = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-
+                const date = new Date();
+                const timeLabel = `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
                 return {
                     thrust: [...prev.thrust.slice(1), state.thrust],
                     battery: [...prev.battery.slice(1), state.batterySoC],
@@ -282,9 +283,7 @@ const App = () => {
                     labels: [...prev.labels.slice(1), timeLabel]
                 };
             });
-        }, 1000);
-
-        return () => clearInterval(historyTimer);
+        }
     }, [state]);
 
     // Handlers - only work when connected
@@ -833,7 +832,7 @@ const App = () => {
                             </div>
                             <div className="throttle-section-enhanced">
                                 <div className="throttle-display">
-                                    <div className="throttle-value-large">{state.throttle}</div>
+                                    <div className="throttle-value-large">{Math.round(state.throttle || 0)}</div>
                                     <div className="throttle-unit">%</div>
                                 </div>
                                 <div className="throttle-bar-container">
