@@ -87,7 +87,7 @@ RX0 → Serial Monitor
    ```
 
 2. **Adicionar Código:**
-   - Copiar `hybrid_engine_websocket.ino`
+   - Copiar `skyblue-hybrid-engine.ino`
    - Colar no editor
 
 3. **Adicionar Diagram:**

@@ -724,7 +724,7 @@ const HelpModal = ({ isOpen, onClose }) => {
                         <Book size={28} />
                         <div>
                             <h1>SKYBLUE Documentation</h1>
-                            <p>Hybrid Aero Engine Control System v6.0</p>
+                            <p>Hybrid Aero Engine Control System v1.0</p>
                         </div>
                     </div>
                     <button className="help-close-btn" onClick={onClose}>
@@ -757,7 +757,7 @@ const HelpModal = ({ isOpen, onClose }) => {
                 <div className="help-modal-footer">
                     <div className="help-footer-info">
                         <Info size={16} />
-                        <span>SKYBLUE v6.0 Environmental Analysis Edition</span>
+                        <span>SKYBLUE v1.0 Environmental Analysis Edition</span>
                     </div>
                     <div className="help-footer-credits">
                         <a href="https://daniel.marnettech.com.br/" target="_blank" rel="noreferrer" className="dev-credit">Developed by Daniel Marnet</a>

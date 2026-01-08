@@ -1,4 +1,4 @@
-// SKYBLUE v6.0 - Complete Wokwi Integration with Diagram
+// SKYBLUE v1.0 - Complete Wokwi Integration with Diagram
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Power,
@@ -503,7 +503,7 @@ const App = () => {
                     <Zap size={28} className="logo-icon" />
                     <div>
                         <div className="system-title-new">SKYBLUE HYBRID ENGINE</div>
-                        <div className="version-tag-new">v6.0 Environmental Analysis</div>
+                        <div className="version-tag-new">v1.0 Environmental Analysis</div>
                     </div>
                 </div>
 

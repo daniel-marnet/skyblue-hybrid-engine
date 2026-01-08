@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-6.0-blue)
+![Version](https://img.shields.io/badge/version-1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![React](https://img.shields.io/badge/React-18.x-61dafb)
 ![ESP32](https://img.shields.io/badge/ESP32-Compatible-red)
@@ -705,7 +705,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Status
 
-- **Version**: 6.0 (Environmental Analysis Edition)
+- **Version**: 1.0 (Environmental Analysis Edition)
 - **Status**: ✅ Production Ready
 - **Last Updated**: January 2026
 - **Maintenance**: Active
@@ -737,7 +737,7 @@ Need help? Here's how to get support:
 
 <div align="center">
 
-**SKYBLUE v6.0 - Hybrid Aero Engine Control System**
+**SKYBLUE v1.0 - Hybrid Aero Engine Control System**
 
 *Making hybrid aerospace technology accessible to everyone*
 
