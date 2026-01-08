@@ -760,7 +760,7 @@ const HelpModal = ({ isOpen, onClose }) => {
                         <span>SKYBLUE v6.0 Environmental Analysis Edition</span>
                     </div>
                     <div className="help-footer-credits">
-                        Developed by Daniel Marnet
+                        <a href="https://daniel.marnettech.com.br/" target="_blank" rel="noreferrer" className="dev-credit">Developed by Daniel Marnet</a>
                     </div>
                 </div>
             </div>
