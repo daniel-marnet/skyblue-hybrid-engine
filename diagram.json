@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "author": "SkyBlue Aerospace",
+  "author": "Daniel Marnet",
   "editor": "wokwi",
   "parts": [
     {
@@ -11,30 +11,10 @@
       "attrs": {}
     },
     {
-      "type": "wokwi-pushbutton",
-      "id": "btn_master",
-      "top": -150,
-      "left": -150,
-      "attrs": {
-        "label": "MASTER SW",
-        "color": "red"
-      }
-    },
-    {
-      "type": "wokwi-pushbutton",
-      "id": "btn_emergency",
-      "top": -150,
-      "left": 150,
-      "attrs": {
-        "label": "EMERGENCY",
-        "color": "red"
-      }
-    },
-    {
       "type": "wokwi-led",
       "id": "led_motor",
-      "top": 150,
-      "left": -100,
+      "top": -76.8,
+      "left": 105.6,
       "attrs": {
         "color": "green",
         "label": "MOTOR"
@@ -43,8 +23,8 @@
     {
       "type": "wokwi-led",
       "id": "led_ice",
-      "top": 150,
-      "left": 0,
+      "top": -76.8,
+      "left": 153.6,
       "attrs": {
         "color": "orange",
         "label": "ICE"
@@ -53,73 +33,124 @@
     {
       "type": "wokwi-led",
       "id": "led_solar",
-      "top": 150,
-      "left": 100,
+      "top": -76.8,
+      "left": 201.6,
       "attrs": {
         "color": "yellow",
         "label": "SOLAR"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_master",
+      "top": 124.8,
+      "left": -153.6,
+      "attrs": {
+        "color": "green",
+        "label": "MASTER"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_start",
+      "top": 124.8,
+      "left": -86.4,
+      "attrs": {
+        "color": "blue",
+        "label": "START"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_mode",
+      "top": 124.8,
+      "left": -19.2,
+      "attrs": {
+        "color": "cyan",
+        "label": "MODE"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_throttle_up",
+      "top": 124.8,
+      "left": 48,
+      "attrs": {
+        "color": "white",
+        "label": "THR+"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_throttle_down",
+      "top": 124.8,
+      "left": 115.2,
+      "attrs": {
+        "color": "white",
+        "label": "THR-"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_emergency",
+      "top": 124.8,
+      "left": 182.4,
+      "attrs": {
+        "color": "red",
+        "label": "KILL"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_motor",
+      "top": -38.4,
+      "left": 105.6,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_ice",
+      "top": -38.4,
+      "left": 153.6,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_solar",
+      "top": -38.4,
+      "left": 201.6,
+      "attrs": {
+        "value": "220"
       }
     }
   ],
   "connections": [
     [
-      "esp:GND.1",
-      "btn_master:2.L",
-      "black",
-      [
-        "v0"
-      ]
+      "esp:TX0",
+      "$serialMonitor:RX",
+      "",
+      []
     ],
     [
-      "esp:GND.1",
-      "btn_emergency:2.L",
-      "black",
-      [
-        "v0"
-      ]
-    ],
-    [
-      "btn_master:1.L",
-      "esp:4",
-      "red",
-      [
-        "h0"
-      ]
-    ],
-    [
-      "btn_emergency:1.L",
-      "esp:22",
-      "red",
-      [
-        "h0"
-      ]
-    ],
-    [
-      "esp:GND.2",
-      "led_motor:K",
-      "black",
-      [
-        "v0"
-      ]
-    ],
-    [
-      "esp:GND.2",
-      "led_ice:K",
-      "black",
-      [
-        "v0"
-      ]
-    ],
-    [
-      "esp:GND.2",
-      "led_solar:K",
-      "black",
-      [
-        "v0"
-      ]
+      "esp:RX0",
+      "$serialMonitor:TX",
+      "",
+      []
     ],
     [
       "led_motor:A",
+      "r_motor:1",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "r_motor:2",
       "esp:2",
       "green",
       [
@@ -127,7 +158,23 @@
       ]
     ],
     [
+      "led_motor:C",
+      "esp:GND.1",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
       "led_ice:A",
+      "r_ice:1",
+      "orange",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "r_ice:2",
       "esp:15",
       "orange",
       [
@@ -135,9 +182,129 @@
       ]
     ],
     [
+      "led_ice:C",
+      "esp:GND.1",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
       "led_solar:A",
+      "r_solar:1",
+      "yellow",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "r_solar:2",
       "esp:13",
       "yellow",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "led_solar:C",
+      "esp:GND.1",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_master:1.l",
+      "esp:4",
+      "green",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_master:2.l",
+      "esp:GND.2",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_start:1.l",
+      "esp:5",
+      "blue",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_start:2.l",
+      "esp:GND.2",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_mode:1.l",
+      "esp:18",
+      "cyan",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_mode:2.l",
+      "esp:GND.2",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_throttle_up:1.l",
+      "esp:19",
+      "white",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_throttle_up:2.l",
+      "esp:GND.2",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_throttle_down:1.l",
+      "esp:21",
+      "white",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_throttle_down:2.l",
+      "esp:GND.2",
+      "black",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_emergency:1.l",
+      "esp:22",
+      "red",
+      [
+        "v0"
+      ]
+    ],
+    [
+      "btn_emergency:2.l",
+      "esp:GND.2",
+      "black",
       [
         "v0"
       ]
