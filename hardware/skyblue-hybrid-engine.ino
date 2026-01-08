@@ -16,8 +16,7 @@
 const char* ssid = "Wokwi-GUEST";
 const char* password = "";
 
-// Relay server URL (SUBSTITUA pelo seu domínio Vercel)
-const char* RELAY_SERVER = "https://skyblue-hybrid-engine.vercel.app";
+const char* RELAY_SERVER = "https://skyblue.marnettech.com.br";
 const char* DATA_ENDPOINT = "/api/websocket-relay/wokwi";
 const char* COMMAND_ENDPOINT = "/api/websocket-relay/command";
 
@@ -102,14 +101,13 @@ void setup() {
     Serial.println("=================================");
     Serial.println("Connecting to WiFi...");
 
-    WiFi.begin(ssid, password, 6); // Channel 6 is better for Wokwi
+    WiFi.begin(ssid, password); // Remove channel for better auto-detection
 
     int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 60) { // Increased to 30 seconds
+    while (WiFi.status() != WL_CONNECTED && attempts < 30) { // Fast initial check (15s)
         delay(500);
         Serial.print(".");
         attempts++;
-        if (attempts % 10 == 0) Serial.printf(" [%d/60]\n", attempts);
     }
 
     if (WiFi.status() == WL_CONNECTED) {
@@ -226,6 +224,11 @@ void loop() {
     digitalWrite(PIN_LED_MOTOR_ON, motorOn);
     digitalWrite(PIN_LED_ICE_ON, iceOn);
     digitalWrite(PIN_LED_SOLAR_ACTIVE, solarW > 1000.0);
+
+    // Auto-reconnect WiFi if lost
+    if (WiFi.status() != WL_CONNECTED && (now % 10000 < 50)) {
+        WiFi.begin(ssid, password);
+    }
 
     // Send data to relay server every 500ms
     if (WiFi.status() == WL_CONNECTED && now - lastDataSend > 500) {
