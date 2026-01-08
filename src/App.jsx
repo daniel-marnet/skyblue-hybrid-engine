@@ -1,3 +1,4 @@
+// SKYBLUE v6.0 - Complete Wokwi Integration with Diagram
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Power,
