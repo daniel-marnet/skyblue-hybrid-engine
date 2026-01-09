@@ -2,7 +2,7 @@
 
 SKYBLUE is a professional-grade telemetry and control system for hybrid-electric aircraft propulsion. It bridges high-fidelity hardware simulation (ESP32) with a real-time engineering dashboard to analyze performance and environmental impact.
 
-[![Live Demo](https://img.shields.io/badge/Demo-Live-cyan)](https://skyblue.marnettech.com.br)
+[![Live Demo](https://img.shields.io/badge/Demo-Live-cyan)](https://skyblue-hybrid-engine.vercel.app)
 [![Hardware Simulation](https://img.shields.io/badge/Wokwi-ESP32-red)](https://wokwi.com/projects/452473775385515009)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -69,7 +69,22 @@ npm run dev
 
 ---
 
-## 👨‍💻 Author & Support
+## � Analytics & Monitoring
+
+The system integrates **Google Analytics 4 (GA4)** to track user interactions and system performance:
+
+*   **Measurement ID:** `G-6K9LRYJBFT`
+*   **Tracked Events:**
+    *   Engine control actions (power on/off, ICE start/stop, mode changes)
+    *   Throttle adjustments and emergency activations
+    *   Connection status changes (Wokwi connection/disconnection)
+    *   System errors and performance metrics
+
+For detailed analytics implementation, see [`/docs/GOOGLE_ANALYTICS.md`](./docs/GOOGLE_ANALYTICS.md).
+
+---
+
+## �👨‍💻 Author & Support
 
 **Daniel Marnet**
 *   **Portfolio:** [daniel.marnettech.com.br](https://daniel.marnettech.com.br/)

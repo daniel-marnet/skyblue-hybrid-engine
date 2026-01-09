@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useWebSocketConnection } from './hooks/useWebSocketConnection';
 import HelpModal from './components/HelpModal';
+import { trackEngineControl, trackSystemStatus, trackInteraction, trackError } from './utils/analytics';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -155,7 +156,21 @@ const App = () => {
     // Update connection status from WebSocket
     useEffect(() => {
         setIsConnected(wsConnected);
+        if (wsConnected) {
+            trackSystemStatus('connected', { device_type: 'Wokwi_ESP32' });
+        } else {
+            trackSystemStatus('disconnected', {});
+        }
     }, [wsConnected]);
+
+    // Track WebSocket errors
+    useEffect(() => {
+        if (wsError) {
+            trackError('websocket_error', wsError, {
+                connection_status: isConnected ? 'connected' : 'disconnected'
+            });
+        }
+    }, [wsError, isConnected]);
 
     useEffect(() => {
         if (wsData) {
@@ -290,32 +305,51 @@ const App = () => {
     const toggleMaster = () => {
         if (!isConnected) {
             alert('⚠️ Connect to Wokwi first! Click the "Connect Wokwi" cloud button in the top-right corner.');
+            trackInteraction('master_power_button', 'click_blocked', { reason: 'not_connected' });
             return;
         }
         const next = !state.masterPower;
         setState(s => ({ ...s, masterPower: next }));
         if (isConnected) sendCommand(next ? "MASTER_ON" : "MASTER_OFF");
+        trackEngineControl(next ? 'master_power_on' : 'master_power_off', {
+            battery_level: state.batterySoC,
+            fuel_level: state.fuelLevel
+        });
     };
 
     const toggleICE = () => {
         if (!isConnected) {
             alert('⚠️ Connect to Wokwi first! Click the "Connect Wokwi" cloud button in the top-right corner.');
+            trackInteraction('ice_button', 'click_blocked', { reason: 'not_connected' });
             return;
         }
         if (state.masterPower) {
-            setState(s => ({ ...s, iceRunning: !s.iceRunning }));
+            const nextState = !state.iceRunning;
+            setState(s => ({ ...s, iceRunning: nextState }));
             if (isConnected) sendCommand("ICE_START");
+            trackEngineControl(nextState ? 'ice_start' : 'ice_stop', {
+                mode: getModeLabel(),
+                battery_level: state.batterySoC,
+                fuel_level: state.fuelLevel
+            });
         }
     };
 
     const cycleMode = () => {
         if (!isConnected) {
             alert('⚠️ Connect to Wokwi first! Click the "Connect Wokwi" cloud button in the top-right corner.');
+            trackInteraction('mode_button', 'click_blocked', { reason: 'not_connected' });
             return;
         }
         const next = (state.mode + 1) % 3;
+        const modes = ['ELECTRIC', 'HYBRID', 'CHARGING'];
         setState(s => ({ ...s, mode: next }));
         if (isConnected) sendCommand("MODE", next);
+        trackEngineControl('mode_change', {
+            old_mode: modes[state.mode],
+            new_mode: modes[next],
+            battery_level: state.batterySoC
+        });
     };
 
     const handleThrottleChange = (e) => {
@@ -325,16 +359,31 @@ const App = () => {
         if (state.masterPower && !state.emergencyMode) {
             setState(s => ({ ...s, throttle: val }));
             if (isConnected) sendCommand("THROTTLE", val);
+            // Only track significant throttle changes (every 10%)
+            if (Math.abs(val - state.throttle) >= 10) {
+                trackEngineControl('throttle_change', {
+                    old_value: state.throttle,
+                    new_value: val,
+                    mode: getModeLabel()
+                });
+            }
         }
     };
 
     const handleEmergency = () => {
         if (!isConnected) {
             alert('⚠️ Connect to Wokwi first! Click the "Connect Wokwi" cloud button in the top-right corner.');
+            trackInteraction('emergency_button', 'click_blocked', { reason: 'not_connected' });
             return;
         }
         setState(s => ({ ...s, emergencyMode: true, throttle: 0 }));
         if (isConnected) sendCommand("EMERGENCY_ON");
+        trackEngineControl('emergency_activated', {
+            previous_throttle: state.throttle,
+            mode: getModeLabel(),
+            altitude: state.altitude,
+            speed: state.speed
+        });
     };
 
     const getModeLabel = () => {
