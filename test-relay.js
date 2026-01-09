@@ -10,7 +10,7 @@ const data = JSON.stringify({
 });
 
 const options = {
-    hostname: 'skyblue.marnettech.com.br',
+    hostname: 'skyblue-hybrid-engine.vercel.app',
     port: 443,
     path: '/api/websocket-relay/wokwi',
     method: 'POST',

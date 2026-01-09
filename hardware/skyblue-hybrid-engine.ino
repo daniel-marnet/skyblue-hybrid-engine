@@ -5,7 +5,7 @@
 // --- Configurações de Rede ---
 const char* ssid = "Wokwi-GUEST";
 const char* password = "";
-const char* RELAY_SERVER = "https://skyblue.marnettech.com.br";
+const char* RELAY_SERVER = "https://skyblue-hybrid-engine.vercel.app";
 const char* DATA_ENDPOINT = "/api/websocket-relay/wokwi";
 const char* COMMAND_ENDPOINT = "/api/websocket-relay/command";
 
