@@ -69,21 +69,6 @@ npm run dev
 
 ---
 
-## � Analytics & Monitoring
-
-The system integrates **Google Analytics 4 (GA4)** to track user interactions and system performance:
-
-*   **Measurement ID:** `G-6K9LRYJBFT`
-*   **Tracked Events:**
-    *   Engine control actions (power on/off, ICE start/stop, mode changes)
-    *   Throttle adjustments and emergency activations
-    *   Connection status changes (Wokwi connection/disconnection)
-    *   System errors and performance metrics
-
-For detailed analytics implementation, see [`/docs/GOOGLE_ANALYTICS.md`](./docs/GOOGLE_ANALYTICS.md).
-
----
-
 ## �👨‍💻 Author & Support
 
 **Daniel Marnet**
